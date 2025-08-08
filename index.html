@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.0.4/dist/jsQR.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -21,18 +21,8 @@
             margin: 0;
             padding: 1rem;
         }
-
-        .container {
-            max-width: 420px;
-            width: 100%;
-        }
-
-        .points-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 1rem;
-        }
-
+        .container { max-width: 420px; width: 100%; }
+        .points-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; }
         .point {
             width: 100%;
             padding-top: 100%;
@@ -47,14 +37,12 @@
             transition: all 0.3s ease;
             position: relative;
         }
-
         .point-filled {
             background-color: #2563eb;
             border-color: #2563eb;
             color: white;
             animation: pulse-fill 0.5s ease;
         }
-
         .logo-placeholder {
             width: 100px;
             height: 100px;
@@ -67,7 +55,6 @@
             font-weight: 700;
             border-radius: 100%;
         }
-
         .congrats {
             text-align: center;
             padding: 2rem 1rem;
@@ -76,33 +63,16 @@
             border-radius: 16px;
             animation: slide-in 0.5s ease;
         }
-
-        .congrats h2 {
-            font-size: 2rem;
-            font-weight: 700;
-        }
-
-        .congrats p {
-            font-size: 1.25rem;
-            margin-top: 0.5rem;
-        }
-
-        /* Animações */
         @keyframes pulse-fill {
             0% { transform: scale(1); }
             50% { transform: scale(1.1); }
             100% { transform: scale(1); }
         }
-
         @keyframes slide-in {
             0% { transform: translateY(20px); opacity: 0; }
             100% { transform: translateY(0); opacity: 1; }
         }
-
-        .hidden {
-            display: none !important;
-        }
-
+        .hidden { display: none !important; }
         .scanner-container {
             width: 100%;
             position: relative;
@@ -113,93 +83,75 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
         }
-
         .scanner-container video {
             width: 100%;
-            height: 100%;
+            height: auto;
             border-radius: 12px;
             object-fit: cover;
             display: block;
         }
-
-        .scanner-container canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-        }
+        .scanner-container canvas { display: none; }
     </style>
 </head>
 <body class="bg-gray-100 p-4">
-    <!-- Container Principal do Aplicativo -->
+    <!-- Container Principal -->
     <div class="container bg-white shadow-xl rounded-2xl p-6 md:p-8 flex flex-col items-center">
-        <!-- Cabeçalho do Aplicativo (Comum para ambas as telas) -->
+        <!-- Cabeçalho -->
         <div class="logo-placeholder mb-4">Logo</div>
         <h1 class="text-3xl font-bold text-gray-800 mb-2">Restaurante Exemplo</h1>
         <p class="text-gray-500 mb-6">Cartão Fidelidade Flash</p>
+        <p id="user-id-display" class="text-xs text-gray-400 mb-4 break-all text-center hidden"></p>
 
         <!-- Tela do Cliente -->
-        <div id="client-view" class="w-full flex flex-col items-center">
-            <p id="status-message" class="text-lg text-gray-700 font-semibold mb-6 text-center">
-                Você tem <span id="current-points">0</span> de 10 pontos.
-            </p>
-            
-            <div id="points-grid" class="points-grid w-full">
-                <!-- Pontos serão gerados aqui -->
+        <div id="client-view" class="hidden w-full flex flex-col items-center">
+            <div id="loading-state" class="text-center p-8">
+                <p class="text-gray-600">Carregando seu cartão...</p>
             </div>
-            
-            <div class="w-full flex flex-col gap-4 mt-8">
-                <button id="generate-qrcode-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 transition duration-300">
-                    Gerar QR Code para o Atendente
-                </button>
-                
-                <button id="redeem-btn" class="hidden w-full bg-green-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-600 transition duration-300">
-                    Resgatar Prêmio Agora
-                </button>
+            <div id="card-content" class="hidden w-full">
+                <p id="status-message" class="text-lg text-gray-700 font-semibold mb-6 text-center"></p>
+                <div id="points-grid" class="points-grid w-full"></div>
+                <div class="w-full flex flex-col gap-4 mt-8">
+                    <button id="generate-qrcode-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 transition duration-300">
+                        Gerar QR Code para Pontuar
+                    </button>
+                    <button id="redeem-btn" class="hidden w-full bg-green-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-600 transition duration-300">
+                        Resgatar Prêmio Agora
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Tela do Atendente (Caixa) -->
+        <!-- Tela do Atendente -->
         <div id="cashier-view" class="hidden w-full flex flex-col items-center">
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Área do Atendente</h2>
             <p class="text-gray-600 mb-6 text-center">Escaneie o QR Code do cliente para adicionar um ponto.</p>
-            
-            <!-- Scanner de QR Code real -->
             <div id="scanner-container" class="scanner-container w-full">
                 <div id="scanner-placeholder" class="flex flex-col items-center justify-center p-8">
                     <p class="text-gray-500 font-bold">Leitor de QR Code</p>
-                    <p class="text-sm font-normal mt-2">Clique abaixo para iniciar a câmera</p>
                 </div>
                 <video id="scanner-video" class="hidden"></video>
                 <canvas id="scanner-canvas"></canvas>
             </div>
-            
             <button id="start-scan-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-indigo-700 transition duration-300 mt-6">
                 Iniciar Scanner
             </button>
-            
-            <!-- Feedback de escaneamento -->
-            <p id="scan-feedback" class="mt-4 text-center text-green-600 font-semibold hidden"></p>
+            <p id="scan-feedback" class="mt-4 text-center font-semibold hidden"></p>
         </div>
 
-        <!-- Modal de QR Code para o cliente -->
-        <div id="qrcode-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4">
+        <!-- Modals -->
+        <div id="qrcode-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
             <div class="bg-white rounded-xl p-8 max-w-sm w-full text-center shadow-2xl">
                 <h3 class="text-xl font-bold mb-4">Mostre este QR Code ao Atendente</h3>
-                <p class="text-gray-700 mb-6">Ele irá escanear para registrar seu ponto.</p>
                 <canvas id="qrcode-canvas" class="w-full rounded-lg"></canvas>
                 <button id="close-qrcode-modal" class="w-full bg-gray-300 text-gray-800 py-2 rounded-xl font-bold hover:bg-gray-400 transition mt-6">Fechar</button>
             </div>
         </div>
-
-        <!-- Modal de confirmação de resgate -->
-        <div id="redeem-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4">
+        <div id="redeem-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
             <div class="bg-white rounded-xl p-8 max-w-sm w-full text-center shadow-2xl">
-                <h3 class="text-xl font-bold mb-4">Confirmação de Resgate</h3>
-                <p class="text-gray-700 mb-6">O atendente precisa confirmar o resgate. Tem certeza que deseja resgatar seu prêmio?</p>
+                <h3 class="text-xl font-bold mb-4">Confirmar Resgate?</h3>
+                <p class="text-gray-700 mb-6">O atendente irá confirmar o resgate do seu prêmio.</p>
                 <div class="flex gap-4">
                     <button id="confirm-redeem-btn" class="w-full bg-green-500 text-white py-2 rounded-xl font-bold hover:bg-green-600 transition">Confirmar</button>
                     <button id="cancel-redeem-btn" class="w-full bg-gray-300 text-gray-800 py-2 rounded-xl font-bold hover:bg-gray-400 transition">Cancelar</button>
@@ -208,92 +160,124 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- CONFIGURAÇÃO ---
+        // TODO: Substitua pelo seu objeto de configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "SUA_API_KEY",
+            authDomain: "SEU_AUTH_DOMAIN",
+            projectId: "SEU_PROJECT_ID",
+            storageBucket: "SEU_STORAGE_BUCKET",
+            messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+            appId: "SEU_APP_ID"
+        };
+        
         const TOTAL_POINTS = 10;
         const PRIZE_DESCRIPTION = "um café grátis";
-        
-        const LOCAL_STORAGE_KEY = 'fidelidadeFlashPoints';
-        const UNIQUE_CLIENT_ID_KEY = 'fidelidadeClientId';
-        
+
+        // --- INICIALIZAÇÃO DO FIREBASE ---
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- ELEMENTOS DO DOM ---
         const clientView = document.getElementById('client-view');
+        const cashierView = document.getElementById('cashier-view');
+        const userIdDisplay = document.getElementById('user-id-display');
+        
+        // Elementos do Cliente
+        const loadingState = document.getElementById('loading-state');
+        const cardContent = document.getElementById('card-content');
         const statusMessageEl = document.getElementById('status-message');
-        const currentPointsEl = document.getElementById('current-points');
         const pointsGridEl = document.getElementById('points-grid');
         const generateQrcodeBtn = document.getElementById('generate-qrcode-btn');
         const redeemBtn = document.getElementById('redeem-btn');
         const qrcodeModal = document.getElementById('qrcode-modal');
         const closeQrcodeModalBtn = document.getElementById('close-qrcode-modal');
         const qrcodeCanvas = document.getElementById('qrcode-canvas');
+        const redeemModal = document.getElementById('redeem-modal');
+        const confirmRedeemBtn = document.getElementById('confirm-redeem-btn');
+        const cancelRedeemBtn = document.getElementById('cancel-redeem-btn');
 
-        const cashierView = document.getElementById('cashier-view');
+        // Elementos do Atendente
         const scannerVideo = document.getElementById('scanner-video');
         const scannerCanvas = document.getElementById('scanner-canvas');
         const scannerPlaceholder = document.getElementById('scanner-placeholder');
         const startScanBtn = document.getElementById('start-scan-btn');
         const scanFeedbackEl = document.getElementById('scan-feedback');
-        const redeemModal = document.getElementById('redeem-modal');
-        const confirmRedeemBtn = document.getElementById('confirm-redeem-btn');
-        const cancelRedeemBtn = document.getElementById('cancel-redeem-btn');
 
-        let clientId = localStorage.getItem(UNIQUE_CLIENT_ID_KEY);
-        if (!clientId) {
-            clientId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-            localStorage.setItem(UNIQUE_CLIENT_ID_KEY, clientId);
-        }
+        let currentUserId = null;
+        let unsubscribeCardListener = null; // Para parar de ouvir as atualizações do cartão
+        let animationFrameId;
 
-        const getPoints = () => {
-            const points = localStorage.getItem(LOCAL_STORAGE_KEY);
-            return points ? parseInt(points, 10) : 0;
-        };
-        
-        const savePoints = (points) => {
-            localStorage.setItem(LOCAL_STORAGE_KEY, points);
-        };
-        
-        const renderCard = () => {
-            const currentPoints = getPoints();
-            
+        // --- FUNÇÕES PRINCIPAIS ---
+
+        const renderCard = (points) => {
             pointsGridEl.innerHTML = '';
             for (let i = 1; i <= TOTAL_POINTS; i++) {
                 const pointDiv = document.createElement('div');
                 pointDiv.className = 'point';
                 pointDiv.textContent = i;
-                if (i <= currentPoints) {
+                if (i <= points) {
                     pointDiv.classList.add('point-filled');
                 }
                 pointsGridEl.appendChild(pointDiv);
             }
-            
-            if (currentPoints >= TOTAL_POINTS) {
+
+            if (points >= TOTAL_POINTS) {
                 statusMessageEl.innerHTML = `
                     <div class="congrats">
                         <h2>PARABÉNS!</h2>
                         <p>Você ganhou ${PRIZE_DESCRIPTION}!</p>
-                        <p class="mt-2 text-sm font-normal">Mostre esta tela ao atendente para resgatar.</p>
-                    </div>
-                `;
+                    </div>`;
                 generateQrcodeBtn.classList.add('hidden');
                 redeemBtn.classList.remove('hidden');
             } else {
-                statusMessageEl.textContent = `Você tem ${currentPoints} de ${TOTAL_POINTS} pontos.`;
-                currentPointsEl.textContent = currentPoints;
+                statusMessageEl.innerHTML = `Você tem <span class="font-bold text-blue-600 text-xl">${points}</span> de ${TOTAL_POINTS} pontos.`;
                 generateQrcodeBtn.classList.remove('hidden');
                 redeemBtn.classList.add('hidden');
             }
-        };
-
-        const renderCashierView = () => {
-            clientView.classList.add('hidden');
-            cashierView.classList.remove('hidden');
-        };
-
-        const renderClientView = () => {
-            cashierView.classList.add('hidden');
-            clientView.classList.remove('hidden');
-            renderCard();
+            
+            loadingState.classList.add('hidden');
+            cardContent.classList.remove('hidden');
         };
         
-        let animationFrameId;
+        const setupCardListener = (userId) => {
+            const cardRef = doc(db, "loyalty_cards", userId);
+            
+            // Cancela o listener anterior se existir
+            if (unsubscribeCardListener) {
+                unsubscribeCardListener();
+            }
+
+            unsubscribeCardListener = onSnapshot(cardRef, async (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    renderCard(data.points);
+                } else {
+                    // Se o cartão não existe, cria um novo com 0 pontos
+                    await setDoc(cardRef, { points: 0, userId: userId });
+                    renderCard(0);
+                }
+            });
+        };
+
+        const showClientView = () => {
+            clientView.classList.remove('hidden');
+            cashierView.classList.add('hidden');
+        };
+
+        const showCashierView = () => {
+            cashierView.classList.remove('hidden');
+            clientView.classList.add('hidden');
+        };
+        
+        // --- LÓGICA DO ATENDENTE (SCANNER) ---
 
         const startScanner = async () => {
             scanFeedbackEl.classList.add('hidden');
@@ -301,13 +285,16 @@
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 scannerVideo.srcObject = stream;
                 scannerVideo.setAttribute('playsinline', true);
-                scannerVideo.play();
+                await scannerVideo.play();
 
                 scannerPlaceholder.classList.add('hidden');
                 scannerVideo.classList.remove('hidden');
-                startScanBtn.classList.add('hidden');
+                startScanBtn.textContent = "Parar Scanner";
+                startScanBtn.classList.replace('bg-indigo-600', 'bg-red-600');
+                startScanBtn.classList.replace('hover:bg-indigo-700', 'hover:bg-red-700');
 
-                const canvasContext = scannerCanvas.getContext('2d');
+                const canvasContext = scannerCanvas.getContext('2d', { willReadFrequently: true });
+                
                 const scan = () => {
                     if (scannerVideo.readyState === scannerVideo.HAVE_ENOUGH_DATA) {
                         scannerCanvas.height = scannerVideo.videoHeight;
@@ -319,36 +306,8 @@
                         });
 
                         if (code) {
-                            stopScanner();
-                            const url = code.data;
-                            try {
-                                const urlObj = new URL(url);
-                                const urlParams = new URLSearchParams(urlObj.search);
-                                const scannedClientId = urlParams.get('clientId');
-                                
-                                if (scannedClientId) {
-                                    let points = getPoints();
-                                    if (points < TOTAL_POINTS) {
-                                        points++;
-                                        savePoints(points);
-                                        scanFeedbackEl.textContent = `Ponto adicionado com sucesso! Cartão atualizado: ${points} de ${TOTAL_POINTS}.`;
-                                        scanFeedbackEl.classList.remove('hidden');
-                                    } else {
-                                        scanFeedbackEl.textContent = 'Cliente já tem pontos suficientes para resgatar o prêmio!';
-                                        scanFeedbackEl.classList.add('text-red-600');
-                                        scanFeedbackEl.classList.remove('hidden');
-                                    }
-                                } else {
-                                    scanFeedbackEl.textContent = 'QR Code inválido. Tente novamente.';
-                                    scanFeedbackEl.classList.add('text-red-600');
-                                    scanFeedbackEl.classList.remove('hidden');
-                                }
-                            } catch (e) {
-                                scanFeedbackEl.textContent = 'QR Code inválido. Tente novamente.';
-                                scanFeedbackEl.classList.add('text-red-600');
-                                scanFeedbackEl.classList.remove('hidden');
-                            }
-                            return;
+                            handleScannedCode(code.data);
+                            return; // Para o loop de escaneamento
                         }
                     }
                     animationFrameId = requestAnimationFrame(scan);
@@ -357,57 +316,116 @@
 
             } catch (err) {
                 console.error('Erro ao acessar a câmera:', err);
-                scannerPlaceholder.innerHTML = `<p class="text-red-600 font-bold">Erro: Não foi possível acessar a câmera.</p><p class="text-sm font-normal">Verifique as permissões do navegador.</p>`;
-                startScanBtn.classList.remove('hidden');
+                scannerPlaceholder.innerHTML = `<p class="text-red-600 font-bold">Erro ao acessar a câmera.</p>`;
             }
         };
 
         const stopScanner = () => {
             if (scannerVideo.srcObject) {
                 scannerVideo.srcObject.getTracks().forEach(track => track.stop());
+                scannerVideo.srcObject = null;
             }
             scannerVideo.classList.add('hidden');
             scannerPlaceholder.classList.remove('hidden');
-            startScanBtn.classList.remove('hidden');
+            startScanBtn.textContent = "Iniciar Scanner";
+            startScanBtn.classList.replace('bg-red-600', 'bg-indigo-600');
+            startScanBtn.classList.replace('hover:bg-red-700', 'hover:bg-indigo-700');
             cancelAnimationFrame(animationFrameId);
         };
-        
+
+        const handleScannedCode = async (scannedUserId) => {
+            stopScanner();
+            if (!scannedUserId) {
+                scanFeedbackEl.textContent = 'QR Code inválido.';
+                scanFeedbackEl.className = 'mt-4 text-center font-semibold text-red-600';
+                scanFeedbackEl.classList.remove('hidden');
+                return;
+            }
+
+            const cardRef = doc(db, "loyalty_cards", scannedUserId);
+            
+            try {
+                const cardDoc = await getDoc(cardRef);
+                if (!cardDoc.exists()) {
+                    scanFeedbackEl.textContent = 'Cartão do cliente não encontrado.';
+                    scanFeedbackEl.className = 'mt-4 text-center font-semibold text-red-600';
+                } else if (cardDoc.data().points >= TOTAL_POINTS) {
+                    scanFeedbackEl.textContent = 'Cliente já completou o cartão!';
+                    scanFeedbackEl.className = 'mt-4 text-center font-semibold text-yellow-600';
+                } else {
+                    await updateDoc(cardRef, {
+                        points: increment(1)
+                    });
+                    scanFeedbackEl.textContent = 'Ponto adicionado com sucesso!';
+                    scanFeedbackEl.className = 'mt-4 text-center font-semibold text-green-600';
+                }
+            } catch (error) {
+                console.error("Erro ao adicionar ponto: ", error);
+                scanFeedbackEl.textContent = 'Erro ao conectar com o banco de dados.';
+                scanFeedbackEl.className = 'mt-4 text-center font-semibold text-red-600';
+            } finally {
+                scanFeedbackEl.classList.remove('hidden');
+            }
+        };
+
+        // --- INICIALIZAÇÃO E EVENTOS ---
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Usuário está logado (anonimamente)
+                currentUserId = user.uid;
+                userIdDisplay.textContent = `Seu ID: ${currentUserId}`;
+                userIdDisplay.classList.remove('hidden');
+
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('view') === 'cashier') {
+                    showCashierView();
+                } else {
+                    showClientView();
+                    setupCardListener(currentUserId);
+                }
+            } else {
+                // Usuário não está logado, tenta logar anonimamente
+                signInAnonymously(auth).catch((error) => {
+                    console.error("Erro no login anônimo:", error);
+                    document.body.innerHTML = '<p>Ocorreu um erro ao iniciar. Verifique sua conexão e as configurações do Firebase.</p>';
+                });
+            }
+        });
+
+        // Eventos do Cliente
         generateQrcodeBtn.addEventListener('click', () => {
-            const url = window.location.href.split('?')[0] + `?clientId=${clientId}`;
-            const qr = new QRious({
+            if (!currentUserId) return;
+            new QRious({
                 element: qrcodeCanvas,
-                value: url,
-                size: 256
+                value: currentUserId, // O QR Code agora contém apenas o ID do usuário
+                size: 256,
+                padding: 16
             });
             qrcodeModal.classList.remove('hidden');
         });
 
-        redeemBtn.addEventListener('click', () => {
-            redeemModal.classList.remove('hidden');
-        });
+        closeQrcodeModalBtn.addEventListener('click', () => qrcodeModal.classList.add('hidden'));
+
+        redeemBtn.addEventListener('click', () => redeemModal.classList.remove('hidden'));
+        cancelRedeemBtn.addEventListener('click', () => redeemModal.classList.add('hidden'));
         
-        confirmRedeemBtn.addEventListener('click', () => {
-            savePoints(0);
-            renderCard();
-            redeemModal.classList.add('hidden');
-        });
-        
-        cancelRedeemBtn.addEventListener('click', () => {
+        confirmRedeemBtn.addEventListener('click', async () => {
+            if (!currentUserId) return;
+            const cardRef = doc(db, "loyalty_cards", currentUserId);
+            await setDoc(cardRef, { points: 0, userId: currentUserId }); // Zera os pontos
             redeemModal.classList.add('hidden');
         });
 
-        closeQrcodeModalBtn.addEventListener('click', () => {
-            qrcodeModal.classList.add('hidden');
+        // Eventos do Atendente
+        startScanBtn.addEventListener('click', () => {
+             if (scannerVideo.srcObject) {
+                stopScanner();
+            } else {
+                startScanner();
+            }
         });
-        
-        startScanBtn.addEventListener('click', startScanner);
 
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('view') === 'cashier') {
-            renderCashierView();
-        } else {
-            renderClientView();
-        }
     </script>
 </body>
 </html>
