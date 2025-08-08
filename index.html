@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fidelidade Flash - Restaurante Exemplo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 420px;
+            width: 100%;
+        }
+
+        .points-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+        }
+
+        .point {
+            width: 100%;
+            padding-top: 100%; /* Mantém a proporção quadrada */
+            background-color: #e2e8f0;
+            border: 2px dashed #94a3b8;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            color: #4b5563;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .point-filled {
+            background-color: #2563eb;
+            border-color: #2563eb;
+            color: white;
+            animation: pulse-fill 0.5s ease;
+        }
+
+        .logo-placeholder {
+            width: 100px;
+            height: 100px;
+            background-color: #cbd5e1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #64748b;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border-radius: 100%;
+        }
+
+        .congrats {
+            text-align: center;
+            padding: 2rem 1rem;
+            background-color: #10b981;
+            color: white;
+            border-radius: 16px;
+            animation: slide-in 0.5s ease;
+        }
+
+        .congrats h2 {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .congrats p {
+            font-size: 1.25rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Animações */
+        @keyframes pulse-fill {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes slide-in {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+    <!-- Container Principal do Aplicativo -->
+    <div class="container bg-white shadow-xl rounded-2xl p-6 md:p-8 flex flex-col items-center">
+        <!-- Cabeçalho do Aplicativo (Comum para ambas as telas) -->
+        <div class="logo-placeholder mb-4">Logo</div>
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Restaurante Exemplo</h1>
+        <p class="text-gray-500 mb-6">Cartão Fidelidade Flash</p>
+
+        <!-- Tela do Cliente -->
+        <div id="client-view" class="w-full flex flex-col items-center">
+            <p id="status-message" class="text-lg text-gray-700 font-semibold mb-6 text-center">
+                Você tem <span id="current-points">0</span> de 10 pontos.
+            </p>
+            
+            <div id="points-grid" class="points-grid w-full">
+                <!-- Pontos serão gerados aqui -->
+            </div>
+            
+            <div class="w-full flex flex-col gap-4 mt-8">
+                <!-- Botão para o cliente gerar o QR Code. Isso simula o momento do pagamento. -->
+                <button id="generate-qrcode-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 transition duration-300">
+                    Gerar QR Code para o Atendente
+                </button>
+                
+                <button id="redeem-btn" class="hidden w-full bg-green-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-600 transition duration-300">
+                    Resgatar Prêmio Agora
+                </button>
+            </div>
+        </div>
+
+        <!-- Tela do Atendente (Caixa) -->
+        <div id="cashier-view" class="hidden w-full flex flex-col items-center">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Área do Atendente</h2>
+            <p class="text-gray-600 mb-6 text-center">Escaneie o QR Code do cliente para adicionar um ponto.</p>
+            
+            <!-- Simulação do scanner de QR Code -->
+            <div class="w-full bg-gray-200 rounded-xl p-8 flex flex-col items-center justify-center text-gray-500 font-bold h-64">
+                <p>QR Code Scanner</p>
+                <p class="text-sm font-normal mt-2">Clique para simular o escaneamento</p>
+                <p id="scanning-status" class="mt-4 text-sm text-green-600 hidden">Escaneando...</p>
+            </div>
+            <button id="scan-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-indigo-700 transition duration-300 mt-6">
+                Simular Escaneamento
+            </button>
+
+            <!-- Feedback de escaneamento -->
+            <p id="scan-feedback" class="mt-4 text-center hidden"></p>
+        </div>
+
+        <!-- Modal de QR Code para o cliente -->
+        <div id="qrcode-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl p-8 max-w-sm w-full text-center shadow-2xl">
+                <h3 class="text-xl font-bold mb-4">Mostre este QR Code ao Atendente</h3>
+                <p class="text-gray-700 mb-6">Ele irá escanear para registrar seu ponto.</p>
+                <canvas id="qrcode-canvas" class="w-full rounded-lg"></canvas>
+                <button id="close-qrcode-modal" class="w-full bg-gray-300 text-gray-800 py-2 rounded-xl font-bold hover:bg-gray-400 transition mt-6">Fechar</button>
+            </div>
+        </div>
+
+        <!-- Modal de confirmação de resgate -->
+        <div id="redeem-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl p-8 max-w-sm w-full text-center shadow-2xl">
+                <h3 class="text-xl font-bold mb-4">Confirmação de Resgate</h3>
+                <p class="text-gray-700 mb-6">O atendente precisa confirmar o resgate. Tem certeza que deseja resgatar seu prêmio?</p>
+                <div class="flex gap-4">
+                    <button id="confirm-redeem-btn" class="w-full bg-green-500 text-white py-2 rounded-xl font-bold hover:bg-green-600 transition">Confirmar</button>
+                    <button id="cancel-redeem-btn" class="w-full bg-gray-300 text-gray-800 py-2 rounded-xl font-bold hover:bg-gray-400 transition">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Define as constantes do programa de fidelidade
+        const TOTAL_POINTS = 10;
+        const PRIZE_DESCRIPTION = "um café grátis";
+        
+        // Chaves para o localStorage
+        const LOCAL_STORAGE_KEY = 'fidelidadeFlashPoints';
+        const UNIQUE_CLIENT_ID_KEY = 'fidelidadeClientId';
+        
+        // Elementos do DOM
+        const clientView = document.getElementById('client-view');
+        const cashierView = document.getElementById('cashier-view');
+        const statusMessageEl = document.getElementById('status-message');
+        const currentPointsEl = document.getElementById('current-points');
+        const pointsGridEl = document.getElementById('points-grid');
+        const generateQrcodeBtn = document.getElementById('generate-qrcode-btn');
+        const redeemBtn = document.getElementById('redeem-btn');
+        const redeemModal = document.getElementById('redeem-modal');
+        const confirmRedeemBtn = document.getElementById('confirm-redeem-btn');
+        const cancelRedeemBtn = document.getElementById('cancel-redeem-btn');
+        const qrcodeModal = document.getElementById('qrcode-modal');
+        const closeQrcodeModalBtn = document.getElementById('close-qrcode-modal');
+        const qrcodeCanvas = document.getElementById('qrcode-canvas');
+        const scanBtn = document.getElementById('scan-btn');
+        const scanningStatusEl = document.getElementById('scanning-status');
+        const scanFeedbackEl = document.getElementById('scan-feedback');
+
+        // Gera um ID único para o cliente, se ainda não existir
+        let clientId = localStorage.getItem(UNIQUE_CLIENT_ID_KEY);
+        if (!clientId) {
+            clientId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem(UNIQUE_CLIENT_ID_KEY, clientId);
+        }
+
+        // Função para obter os pontos do localStorage
+        const getPoints = () => {
+            const points = localStorage.getItem(LOCAL_STORAGE_KEY);
+            return points ? parseInt(points, 10) : 0;
+        };
+        
+        // Função para salvar os pontos no localStorage
+        const savePoints = (points) => {
+            localStorage.setItem(LOCAL_STORAGE_KEY, points);
+        };
+        
+        // Função para renderizar o cartão de fidelidade
+        const renderCard = () => {
+            const currentPoints = getPoints();
+            
+            pointsGridEl.innerHTML = '';
+            for (let i = 1; i <= TOTAL_POINTS; i++) {
+                const pointDiv = document.createElement('div');
+                pointDiv.className = 'point';
+                pointDiv.textContent = i;
+                if (i <= currentPoints) {
+                    pointDiv.classList.add('point-filled');
+                }
+                pointsGridEl.appendChild(pointDiv);
+            }
+            
+            if (currentPoints >= TOTAL_POINTS) {
+                statusMessageEl.innerHTML = `
+                    <div class="congrats">
+                        <h2>PARABÉNS!</h2>
+                        <p>Você ganhou ${PRIZE_DESCRIPTION}!</p>
+                        <p class="mt-2 text-sm font-normal">Mostre esta tela ao atendente para resgatar.</p>
+                    </div>
+                `;
+                generateQrcodeBtn.classList.add('hidden');
+                redeemBtn.classList.remove('hidden');
+            } else {
+                statusMessageEl.textContent = `Você tem ${currentPoints} de ${TOTAL_POINTS} pontos.`;
+                currentPointsEl.textContent = currentPoints;
+                generateQrcodeBtn.classList.remove('hidden');
+                redeemBtn.classList.add('hidden');
+            }
+        };
+
+        // Lógica da tela do atendente
+        const renderCashierView = () => {
+            clientView.classList.add('hidden');
+            cashierView.classList.remove('hidden');
+        };
+
+        // Lógica da tela do cliente
+        const renderClientView = () => {
+            cashierView.classList.add('hidden');
+            clientView.classList.remove('hidden');
+            renderCard(); // Renderiza o cartão na tela do cliente
+        };
+
+        // Evento de clique para gerar QR Code
+        generateQrcodeBtn.addEventListener('click', () => {
+            // A URL do QR Code contém o ID do cliente.
+            // Para simular, usaremos a URL da página + um parâmetro.
+            const url = window.location.href.split('?')[0] + `?clientId=${clientId}`;
+            const qr = new QRious({
+                element: qrcodeCanvas,
+                value: url,
+                size: 256
+            });
+            qrcodeModal.classList.remove('hidden');
+        });
+
+        // Evento de clique no botão para resgatar o prêmio
+        redeemBtn.addEventListener('click', () => {
+            redeemModal.classList.remove('hidden');
+        });
+        
+        // Evento de clique no botão de confirmar resgate no modal
+        confirmRedeemBtn.addEventListener('click', () => {
+            savePoints(0);
+            renderCard();
+            redeemModal.classList.add('hidden');
+        });
+        
+        // Evento de clique no botão de cancelar resgate no modal
+        cancelRedeemBtn.addEventListener('click', () => {
+            redeemModal.classList.add('hidden');
+        });
+
+        // Evento de clique para fechar o modal do QR Code
+        closeQrcodeModalBtn.addEventListener('click', () => {
+            qrcodeModal.classList.add('hidden');
+        });
+
+        // Evento de clique para o atendente simular o escaneamento
+        scanBtn.addEventListener('click', () => {
+            scanningStatusEl.classList.remove('hidden');
+            scanFeedbackEl.classList.add('hidden');
+            // Simula o tempo de escaneamento
+            setTimeout(() => {
+                scanningStatusEl.classList.add('hidden');
+                // Adiciona um ponto ao cliente
+                const currentPoints = getPoints();
+                if (currentPoints < TOTAL_POINTS) {
+                    savePoints(currentPoints + 1);
+                    scanFeedbackEl.textContent = "Ponto adicionado com sucesso ao cliente!";
+                    scanFeedbackEl.classList.remove('hidden');
+                } else {
+                    scanFeedbackEl.textContent = "Cliente já tem pontos suficientes para resgatar!";
+                    scanFeedbackEl.classList.remove('hidden');
+                }
+            }, 1000); // Espera 1 segundo
+        });
+
+        // Lógica para determinar qual view renderizar
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('view') === 'cashier') {
+            renderCashierView();
+        } else {
+            renderClientView();
+        }
+    </script>
+</body>
+</html>
