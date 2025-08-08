@@ -9,6 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <!-- Adicionando a biblioteca jsQR para escanear QR Codes -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.0.4/dist/jsQR.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -101,6 +103,26 @@
         .hidden {
             display: none !important;
         }
+
+        .scanner-container {
+            width: 100%;
+            position: relative;
+        }
+
+        .scanner-container video {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+        }
+
+        .scanner-container canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: auto;
+            display: none;
+        }
     </style>
 </head>
 <body class="bg-gray-100 p-4">
@@ -122,7 +144,6 @@
             </div>
             
             <div class="w-full flex flex-col gap-4 mt-8">
-                <!-- Botão para o cliente gerar o QR Code. Isso simula o momento do pagamento. -->
                 <button id="generate-qrcode-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 transition duration-300">
                     Gerar QR Code para o Atendente
                 </button>
@@ -138,16 +159,15 @@
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Área do Atendente</h2>
             <p class="text-gray-600 mb-6 text-center">Escaneie o QR Code do cliente para adicionar um ponto.</p>
             
-            <!-- Simulação do scanner de QR Code -->
-            <div class="w-full bg-gray-200 rounded-xl p-8 flex flex-col items-center justify-center text-gray-500 font-bold h-64">
-                <p>QR Code Scanner</p>
-                <p class="text-sm font-normal mt-2">Clique para simular o escaneamento</p>
-                <p id="scanning-status" class="mt-4 text-sm text-green-600 hidden">Escaneando...</p>
+            <!-- Scanner de QR Code real -->
+            <div id="scanner-container" class="scanner-container w-full bg-gray-200 rounded-xl p-2 flex flex-col items-center justify-center h-64">
+                <video id="scanner-video" class="w-full h-full rounded-xl object-cover"></video>
+                <div id="scanner-message" class="absolute inset-0 flex items-center justify-center text-center text-gray-500 font-bold p-4">
+                    Aguardando permissão da câmera...
+                </div>
+                <canvas id="scanner-canvas"></canvas>
             </div>
-            <button id="scan-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-indigo-700 transition duration-300 mt-6">
-                Simular Escaneamento
-            </button>
-
+            
             <!-- Feedback de escaneamento -->
             <p id="scan-feedback" class="mt-4 text-center hidden"></p>
         </div>
@@ -184,23 +204,26 @@
         const LOCAL_STORAGE_KEY = 'fidelidadeFlashPoints';
         const UNIQUE_CLIENT_ID_KEY = 'fidelidadeClientId';
         
-        // Elementos do DOM
+        // Elementos do DOM - Cliente
         const clientView = document.getElementById('client-view');
-        const cashierView = document.getElementById('cashier-view');
         const statusMessageEl = document.getElementById('status-message');
         const currentPointsEl = document.getElementById('current-points');
         const pointsGridEl = document.getElementById('points-grid');
         const generateQrcodeBtn = document.getElementById('generate-qrcode-btn');
         const redeemBtn = document.getElementById('redeem-btn');
-        const redeemModal = document.getElementById('redeem-modal');
-        const confirmRedeemBtn = document.getElementById('confirm-redeem-btn');
-        const cancelRedeemBtn = document.getElementById('cancel-redeem-btn');
         const qrcodeModal = document.getElementById('qrcode-modal');
         const closeQrcodeModalBtn = document.getElementById('close-qrcode-modal');
         const qrcodeCanvas = document.getElementById('qrcode-canvas');
-        const scanBtn = document.getElementById('scan-btn');
-        const scanningStatusEl = document.getElementById('scanning-status');
+
+        // Elementos do DOM - Atendente
+        const cashierView = document.getElementById('cashier-view');
+        const scannerVideo = document.getElementById('scanner-video');
+        const scannerCanvas = document.getElementById('scanner-canvas');
+        const scannerMessage = document.getElementById('scanner-message');
         const scanFeedbackEl = document.getElementById('scan-feedback');
+        const redeemModal = document.getElementById('redeem-modal');
+        const confirmRedeemBtn = document.getElementById('confirm-redeem-btn');
+        const cancelRedeemBtn = document.getElementById('cancel-redeem-btn');
 
         // Gera um ID único para o cliente, se ainda não existir
         let clientId = localStorage.getItem(UNIQUE_CLIENT_ID_KEY);
@@ -257,19 +280,75 @@
         const renderCashierView = () => {
             clientView.classList.add('hidden');
             cashierView.classList.remove('hidden');
+            startScanner();
         };
 
         // Lógica da tela do cliente
         const renderClientView = () => {
             cashierView.classList.add('hidden');
             clientView.classList.remove('hidden');
-            renderCard(); // Renderiza o cartão na tela do cliente
+            renderCard();
         };
 
+        // Função para iniciar o scanner de QR Code
+        const startScanner = async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                scannerVideo.srcObject = stream;
+                scannerVideo.setAttribute('playsinline', true); // Necessário para iPhones
+                scannerVideo.play();
+                scannerMessage.textContent = 'Escaneando...';
+                requestAnimationFrame(tick);
+            } catch (err) {
+                console.error('Erro ao acessar a câmera:', err);
+                scannerMessage.textContent = 'Não foi possível acessar a câmera.';
+            }
+        };
+
+        // Função do loop de escaneamento
+        const tick = () => {
+            if (scannerVideo.readyState === scannerVideo.HAVE_ENOUGH_DATA) {
+                const canvasContext = scannerCanvas.getContext('2d');
+                scannerCanvas.height = scannerVideo.videoHeight;
+                scannerCanvas.width = scannerVideo.videoWidth;
+                canvasContext.drawImage(scannerVideo, 0, 0, scannerCanvas.width, scannerCanvas.height);
+                const imageData = canvasContext.getImageData(0, 0, scannerCanvas.width, scannerCanvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: 'dontInvert'
+                });
+
+                if (code) {
+                    // QR Code detectado!
+                    scannerVideo.pause(); // Pausa o vídeo
+                    scannerVideo.srcObject.getTracks().forEach(track => track.stop()); // Para a câmera
+
+                    // Simulação: o atendente lê a URL do cliente e adiciona o ponto
+                    const urlParams = new URLSearchParams(code.data);
+                    const scannedClientId = urlParams.get('clientId');
+                    
+                    if (scannedClientId) {
+                        let points = getPoints();
+                        if (points < TOTAL_POINTS) {
+                            points++;
+                            savePoints(points); // Salva o ponto no armazenamento local
+                            scanFeedbackEl.textContent = `Ponto adicionado com sucesso! Cliente: ${scannedClientId}`;
+                            scanFeedbackEl.classList.remove('hidden');
+                        } else {
+                            scanFeedbackEl.textContent = `Cliente já tem pontos suficientes para resgatar!`;
+                            scanFeedbackEl.classList.remove('hidden');
+                        }
+                    } else {
+                        scanFeedbackEl.textContent = 'QR Code inválido.';
+                        scanFeedbackEl.classList.remove('hidden');
+                    }
+                    return; // Sai do loop de animação
+                }
+            }
+            requestAnimationFrame(tick);
+        };
+        
         // Evento de clique para gerar QR Code
         generateQrcodeBtn.addEventListener('click', () => {
-            // A URL do QR Code contém o ID do cliente.
-            // Para simular, usaremos a URL da página + um parâmetro.
             const url = window.location.href.split('?')[0] + `?clientId=${clientId}`;
             const qr = new QRious({
                 element: qrcodeCanvas,
@@ -299,26 +378,6 @@
         // Evento de clique para fechar o modal do QR Code
         closeQrcodeModalBtn.addEventListener('click', () => {
             qrcodeModal.classList.add('hidden');
-        });
-
-        // Evento de clique para o atendente simular o escaneamento
-        scanBtn.addEventListener('click', () => {
-            scanningStatusEl.classList.remove('hidden');
-            scanFeedbackEl.classList.add('hidden');
-            // Simula o tempo de escaneamento
-            setTimeout(() => {
-                scanningStatusEl.classList.add('hidden');
-                // Adiciona um ponto ao cliente
-                const currentPoints = getPoints();
-                if (currentPoints < TOTAL_POINTS) {
-                    savePoints(currentPoints + 1);
-                    scanFeedbackEl.textContent = "Ponto adicionado com sucesso ao cliente!";
-                    scanFeedbackEl.classList.remove('hidden');
-                } else {
-                    scanFeedbackEl.textContent = "Cliente já tem pontos suficientes para resgatar!";
-                    scanFeedbackEl.classList.remove('hidden');
-                }
-            }, 1000); // Espera 1 segundo
         });
 
         // Lógica para determinar qual view renderizar
