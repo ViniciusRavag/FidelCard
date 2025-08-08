@@ -10,32 +10,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.0.4/dist/jsQR.min.js"></script>
-
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Variáveis globais para o Firebase, que serão preenchidas automaticamente
-        window.firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        window.appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        window.initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-        window.firebase = {
-            initializeApp,
-            getAuth,
-            signInAnonymously,
-            signInWithCustomToken,
-            onAuthStateChanged,
-            getFirestore,
-            doc,
-            getDoc,
-            setDoc,
-            updateDoc,
-            onSnapshot
-        };
-    </script>
-
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -232,65 +206,15 @@
                 </div>
             </div>
         </div>
-
-        <!-- Modal de Erro/Alerta Personalizado -->
-        <div id="alert-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4">
-            <div class="bg-white rounded-xl p-8 max-w-sm w-full text-center shadow-2xl">
-                <h3 id="alert-title" class="text-xl font-bold mb-4 text-red-600">Erro</h3>
-                <p id="alert-message" class="text-gray-700 mb-6"></p>
-                <button id="close-alert-modal" class="w-full bg-gray-300 text-gray-800 py-2 rounded-xl font-bold hover:bg-gray-400 transition mt-6">OK</button>
-            </div>
-        </div>
     </div>
 
-    <script type="module">
-        // Importa as funções do Firebase a partir das variáveis globais
-        const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, doc, setDoc, updateDoc, onSnapshot } = window.firebase;
-        const { firebaseConfig, appId, initialAuthToken } = window;
-
-        // ------------------ Inicialização e Autenticação Firebase ------------------
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        let userId = '';
-        let isAuthReady = false;
-
-        async function initFirebaseAndListen() {
-            try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.error("Erro na autenticação:", error);
-            }
-
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    userId = user.uid;
-                    isAuthReady = true;
-                    console.log("Firebase Auth e Firestore prontos. User ID:", userId);
-                    if (document.getElementById('user-id-display')) {
-                        document.getElementById('user-id-display').textContent = `ID: ${userId}`;
-                    }
-                    // A partir daqui, podemos começar a usar o Firestore
-                    // Para o cliente, iniciamos o listener de pontos
-                    if (urlParams.get('view') !== 'cashier') {
-                         setupClientPointsListener();
-                    }
-                } else {
-                    isAuthReady = true; // Mesmo sem usuário logado, o estado está pronto
-                    console.log("Firebase Auth e Firestore prontos. Usuário anônimo.");
-                }
-            });
-        }
-        
-        // ------------------ Constantes e Elementos do DOM ------------------
+    <script>
         const TOTAL_POINTS = 10;
         const PRIZE_DESCRIPTION = "um café grátis";
-        const urlParams = new URLSearchParams(window.location.search);
-
+        
+        const LOCAL_STORAGE_KEY = 'fidelidadeFlashPoints';
+        const UNIQUE_CLIENT_ID_KEY = 'fidelidadeClientId';
+        
         const clientView = document.getElementById('client-view');
         const statusMessageEl = document.getElementById('status-message');
         const currentPointsEl = document.getElementById('current-points');
@@ -311,27 +235,24 @@
         const confirmRedeemBtn = document.getElementById('confirm-redeem-btn');
         const cancelRedeemBtn = document.getElementById('cancel-redeem-btn');
 
-        const alertModal = document.getElementById('alert-modal');
-        const alertTitleEl = document.getElementById('alert-title');
-        const alertMessageEl = document.getElementById('alert-message');
-        const closeAlertModalBtn = document.getElementById('close-alert-modal');
-        
-        // ------------------ Funções Auxiliares e Lógica do App ------------------
-        let animationFrameId;
-
-        function showAlert(title, message, isError = false) {
-            alertTitleEl.textContent = title;
-            alertMessageEl.textContent = message;
-            alertTitleEl.classList.toggle('text-red-600', isError);
-            alertModal.classList.remove('hidden');
+        let clientId = localStorage.getItem(UNIQUE_CLIENT_ID_KEY);
+        if (!clientId) {
+            clientId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem(UNIQUE_CLIENT_ID_KEY, clientId);
         }
 
-        closeAlertModalBtn.addEventListener('click', () => {
-            alertModal.classList.add('hidden');
-        });
-
-        // Esta função agora recebe os pontos do Firestore
-        const renderCard = (currentPoints) => {
+        const getPoints = () => {
+            const points = localStorage.getItem(LOCAL_STORAGE_KEY);
+            return points ? parseInt(points, 10) : 0;
+        };
+        
+        const savePoints = (points) => {
+            localStorage.setItem(LOCAL_STORAGE_KEY, points);
+        };
+        
+        const renderCard = () => {
+            const currentPoints = getPoints();
+            
             pointsGridEl.innerHTML = '';
             for (let i = 1; i <= TOTAL_POINTS; i++) {
                 const pointDiv = document.createElement('div');
@@ -361,40 +282,20 @@
             }
         };
 
-        // Adiciona um listener em tempo real para os pontos do cliente
-        const setupClientPointsListener = () => {
-            if (!isAuthReady || !userId) {
-                console.error("Firebase ainda não está pronto para o listener.");
-                return;
-            }
-            const loyaltyDocRef = doc(db, `artifacts/${appId}/public/data/loyaltyCards/${userId}`);
-
-            onSnapshot(loyaltyDocRef, (docSnap) => {
-                let currentPoints = 0;
-                if (docSnap.exists()) {
-                    currentPoints = docSnap.data().points || 0;
-                }
-                renderCard(currentPoints);
-            });
-        };
-
-        // Lógica da tela do atendente
         const renderCashierView = () => {
             clientView.classList.add('hidden');
             cashierView.classList.remove('hidden');
         };
 
-        // Lógica da tela do cliente
         const renderClientView = () => {
             cashierView.classList.add('hidden');
             clientView.classList.remove('hidden');
+            renderCard();
         };
+        
+        let animationFrameId;
 
         const startScanner = async () => {
-            if (!isAuthReady) {
-                showAlert('Carregando...', 'Aguardando inicialização do sistema. Tente novamente em instantes.');
-                return;
-            }
             scanFeedbackEl.classList.add('hidden');
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
@@ -426,12 +327,26 @@
                                 const scannedClientId = urlParams.get('clientId');
                                 
                                 if (scannedClientId) {
-                                    addPointToClient(scannedClientId);
+                                    let points = getPoints();
+                                    if (points < TOTAL_POINTS) {
+                                        points++;
+                                        savePoints(points);
+                                        scanFeedbackEl.textContent = `Ponto adicionado com sucesso! Cartão atualizado: ${points} de ${TOTAL_POINTS}.`;
+                                        scanFeedbackEl.classList.remove('hidden');
+                                    } else {
+                                        scanFeedbackEl.textContent = 'Cliente já tem pontos suficientes para resgatar o prêmio!';
+                                        scanFeedbackEl.classList.add('text-red-600');
+                                        scanFeedbackEl.classList.remove('hidden');
+                                    }
                                 } else {
-                                    showAlert('QR Code Inválido', 'O QR Code não contém um ID de cliente válido.', true);
+                                    scanFeedbackEl.textContent = 'QR Code inválido. Tente novamente.';
+                                    scanFeedbackEl.classList.add('text-red-600');
+                                    scanFeedbackEl.classList.remove('hidden');
                                 }
                             } catch (e) {
-                                showAlert('QR Code Inválido', 'O QR Code não contém uma URL válida.', true);
+                                scanFeedbackEl.textContent = 'QR Code inválido. Tente novamente.';
+                                scanFeedbackEl.classList.add('text-red-600');
+                                scanFeedbackEl.classList.remove('hidden');
                             }
                             return;
                         }
@@ -442,7 +357,6 @@
 
             } catch (err) {
                 console.error('Erro ao acessar a câmera:', err);
-                showAlert('Erro na Câmera', 'Não foi possível acessar a câmera. Verifique as permissões do navegador.', true);
                 scannerPlaceholder.innerHTML = `<p class="text-red-600 font-bold">Erro: Não foi possível acessar a câmera.</p><p class="text-sm font-normal">Verifique as permissões do navegador.</p>`;
                 startScanBtn.classList.remove('hidden');
             }
@@ -458,51 +372,8 @@
             cancelAnimationFrame(animationFrameId);
         };
         
-        // Função para adicionar um ponto ao cliente no Firestore
-        const addPointToClient = async (scannedClientId) => {
-            const loyaltyDocRef = doc(db, `artifacts/${appId}/public/data/loyaltyCards/${scannedClientId}`);
-            try {
-                const docSnap = await getDoc(loyaltyDocRef);
-                let currentPoints = 0;
-                if (docSnap.exists()) {
-                    currentPoints = docSnap.data().points;
-                }
-
-                if (currentPoints < TOTAL_POINTS) {
-                    currentPoints++;
-                    await setDoc(loyaltyDocRef, { points: currentPoints });
-                    scanFeedbackEl.textContent = `Ponto adicionado com sucesso! Cartão de ${scannedClientId} agora tem ${currentPoints} de ${TOTAL_POINTS} pontos.`;
-                    scanFeedbackEl.classList.remove('hidden');
-                } else {
-                    scanFeedbackEl.textContent = `Cliente ${scannedClientId} já tem pontos suficientes para resgatar!`;
-                    scanFeedbackEl.classList.add('text-red-600');
-                    scanFeedbackEl.classList.remove('hidden');
-                }
-            } catch (e) {
-                showAlert('Erro', `Falha ao adicionar ponto. Tente novamente. Erro: ${e.message}`, true);
-                console.error("Erro ao adicionar ponto:", e);
-            }
-        };
-        
-        // Função para resgatar o prêmio do cliente
-        const redeemPrize = async () => {
-            const loyaltyDocRef = doc(db, `artifacts/${appId}/public/data/loyaltyCards/${userId}`);
-            try {
-                await updateDoc(loyaltyDocRef, { points: 0 });
-                showAlert('Prêmio Resgatado!', `Parabéns! Seu prêmio de ${PRIZE_DESCRIPTION} foi resgatado.`, false);
-            } catch (e) {
-                showAlert('Erro', `Falha ao resgatar o prêmio. Tente novamente. Erro: ${e.message}`, true);
-                console.error("Erro ao resgatar o prêmio:", e);
-            }
-        };
-
-        // ------------------ Event Listeners ------------------
         generateQrcodeBtn.addEventListener('click', () => {
-            if (!isAuthReady || !userId) {
-                showAlert('Carregando...', 'Aguarde a inicialização do sistema para gerar o QR Code.');
-                return;
-            }
-            const url = window.location.href.split('?')[0] + `?clientId=${userId}`;
+            const url = window.location.href.split('?')[0] + `?clientId=${clientId}`;
             const qr = new QRious({
                 element: qrcodeCanvas,
                 value: url,
@@ -516,7 +387,8 @@
         });
         
         confirmRedeemBtn.addEventListener('click', () => {
-            redeemPrize();
+            savePoints(0);
+            renderCard();
             redeemModal.classList.add('hidden');
         });
         
@@ -530,13 +402,12 @@
         
         startScanBtn.addEventListener('click', startScanner);
 
-        // ------------------ Início da Aplicação ------------------
+        const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('view') === 'cashier') {
             renderCashierView();
         } else {
             renderClientView();
         }
-        initFirebaseAndListen();
     </script>
 </body>
 </html>
