@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-    <!-- Adicionando a biblioteca jsQR para escanear QR Codes -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.0.4/dist/jsQR.min.js"></script>
     <style>
         body {
@@ -36,7 +35,7 @@
 
         .point {
             width: 100%;
-            padding-top: 100%; /* Mantém a proporção quadrada */
+            padding-top: 100%;
             background-color: #e2e8f0;
             border: 2px dashed #94a3b8;
             border-radius: 12px;
@@ -107,12 +106,20 @@
         .scanner-container {
             width: 100%;
             position: relative;
+            background-color: #e2e8f0;
+            border-radius: 12px;
+            min-height: 256px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .scanner-container video {
             width: 100%;
-            height: auto;
+            height: 100%;
             border-radius: 12px;
+            object-fit: cover;
             display: block;
         }
 
@@ -121,7 +128,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: auto;
+            height: 100%;
             display: none;
         }
     </style>
@@ -161,13 +168,18 @@
             <p class="text-gray-600 mb-6 text-center">Escaneie o QR Code do cliente para adicionar um ponto.</p>
             
             <!-- Scanner de QR Code real -->
-            <div id="scanner-container" class="scanner-container w-full bg-gray-200 rounded-xl p-2 flex flex-col items-center justify-center h-64">
-                <video id="scanner-video" class="w-full h-full rounded-xl object-cover"></video>
-                <div id="scanner-message" class="absolute inset-0 flex items-center justify-center text-center text-gray-500 font-bold p-4">
-                    Aguardando permissão da câmera...
+            <div id="scanner-container" class="scanner-container w-full">
+                <div id="scanner-placeholder" class="flex flex-col items-center justify-center p-8">
+                    <p class="text-gray-500 font-bold">Leitor de QR Code</p>
+                    <p class="text-sm font-normal mt-2">Clique abaixo para iniciar a câmera</p>
                 </div>
+                <video id="scanner-video" class="hidden"></video>
                 <canvas id="scanner-canvas"></canvas>
             </div>
+            
+            <button id="start-scan-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-indigo-700 transition duration-300 mt-6">
+                Iniciar Scanner
+            </button>
             
             <!-- Feedback de escaneamento -->
             <p id="scan-feedback" class="mt-4 text-center text-green-600 font-semibold hidden"></p>
@@ -197,15 +209,12 @@
     </div>
 
     <script>
-        // Define as constantes do programa de fidelidade
         const TOTAL_POINTS = 10;
         const PRIZE_DESCRIPTION = "um café grátis";
         
-        // Chaves para o localStorage
         const LOCAL_STORAGE_KEY = 'fidelidadeFlashPoints';
         const UNIQUE_CLIENT_ID_KEY = 'fidelidadeClientId';
         
-        // Elementos do DOM - Cliente
         const clientView = document.getElementById('client-view');
         const statusMessageEl = document.getElementById('status-message');
         const currentPointsEl = document.getElementById('current-points');
@@ -216,35 +225,31 @@
         const closeQrcodeModalBtn = document.getElementById('close-qrcode-modal');
         const qrcodeCanvas = document.getElementById('qrcode-canvas');
 
-        // Elementos do DOM - Atendente
         const cashierView = document.getElementById('cashier-view');
         const scannerVideo = document.getElementById('scanner-video');
         const scannerCanvas = document.getElementById('scanner-canvas');
-        const scannerMessage = document.getElementById('scanner-message');
+        const scannerPlaceholder = document.getElementById('scanner-placeholder');
+        const startScanBtn = document.getElementById('start-scan-btn');
         const scanFeedbackEl = document.getElementById('scan-feedback');
         const redeemModal = document.getElementById('redeem-modal');
         const confirmRedeemBtn = document.getElementById('confirm-redeem-btn');
         const cancelRedeemBtn = document.getElementById('cancel-redeem-btn');
 
-        // Gera um ID único para o cliente, se ainda não existir
         let clientId = localStorage.getItem(UNIQUE_CLIENT_ID_KEY);
         if (!clientId) {
             clientId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
             localStorage.setItem(UNIQUE_CLIENT_ID_KEY, clientId);
         }
 
-        // Função para obter os pontos do localStorage
         const getPoints = () => {
             const points = localStorage.getItem(LOCAL_STORAGE_KEY);
             return points ? parseInt(points, 10) : 0;
         };
         
-        // Função para salvar os pontos no localStorage
         const savePoints = (points) => {
             localStorage.setItem(LOCAL_STORAGE_KEY, points);
         };
         
-        // Função para renderizar o cartão de fidelidade
         const renderCard = () => {
             const currentPoints = getPoints();
             
@@ -277,79 +282,96 @@
             }
         };
 
-        // Lógica da tela do atendente
         const renderCashierView = () => {
             clientView.classList.add('hidden');
             cashierView.classList.remove('hidden');
-            startScanner();
         };
 
-        // Lógica da tela do cliente
         const renderClientView = () => {
             cashierView.classList.add('hidden');
             clientView.classList.remove('hidden');
             renderCard();
         };
+        
+        let animationFrameId;
 
-        // Função para iniciar o scanner de QR Code
         const startScanner = async () => {
+            scanFeedbackEl.classList.add('hidden');
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 scannerVideo.srcObject = stream;
                 scannerVideo.setAttribute('playsinline', true);
                 scannerVideo.play();
-                scannerMessage.classList.add('hidden');
-                requestAnimationFrame(tick);
+
+                scannerPlaceholder.classList.add('hidden');
+                scannerVideo.classList.remove('hidden');
+                startScanBtn.classList.add('hidden');
+
+                const canvasContext = scannerCanvas.getContext('2d');
+                const scan = () => {
+                    if (scannerVideo.readyState === scannerVideo.HAVE_ENOUGH_DATA) {
+                        scannerCanvas.height = scannerVideo.videoHeight;
+                        scannerCanvas.width = scannerVideo.videoWidth;
+                        canvasContext.drawImage(scannerVideo, 0, 0, scannerCanvas.width, scannerCanvas.height);
+                        const imageData = canvasContext.getImageData(0, 0, scannerCanvas.width, scannerCanvas.height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                            inversionAttempts: 'dontInvert'
+                        });
+
+                        if (code) {
+                            stopScanner();
+                            const url = code.data;
+                            try {
+                                const urlObj = new URL(url);
+                                const urlParams = new URLSearchParams(urlObj.search);
+                                const scannedClientId = urlParams.get('clientId');
+                                
+                                if (scannedClientId) {
+                                    let points = getPoints();
+                                    if (points < TOTAL_POINTS) {
+                                        points++;
+                                        savePoints(points);
+                                        scanFeedbackEl.textContent = `Ponto adicionado com sucesso! Cartão atualizado: ${points} de ${TOTAL_POINTS}.`;
+                                        scanFeedbackEl.classList.remove('hidden');
+                                    } else {
+                                        scanFeedbackEl.textContent = 'Cliente já tem pontos suficientes para resgatar o prêmio!';
+                                        scanFeedbackEl.classList.add('text-red-600');
+                                        scanFeedbackEl.classList.remove('hidden');
+                                    }
+                                } else {
+                                    scanFeedbackEl.textContent = 'QR Code inválido. Tente novamente.';
+                                    scanFeedbackEl.classList.add('text-red-600');
+                                    scanFeedbackEl.classList.remove('hidden');
+                                }
+                            } catch (e) {
+                                scanFeedbackEl.textContent = 'QR Code inválido. Tente novamente.';
+                                scanFeedbackEl.classList.add('text-red-600');
+                                scanFeedbackEl.classList.remove('hidden');
+                            }
+                            return;
+                        }
+                    }
+                    animationFrameId = requestAnimationFrame(scan);
+                };
+                animationFrameId = requestAnimationFrame(scan);
+
             } catch (err) {
                 console.error('Erro ao acessar a câmera:', err);
-                scannerMessage.textContent = 'Não foi possível acessar a câmera. Verifique as permissões.';
-                scannerMessage.classList.remove('hidden');
+                scannerPlaceholder.innerHTML = `<p class="text-red-600 font-bold">Erro: Não foi possível acessar a câmera.</p><p class="text-sm font-normal">Verifique as permissões do navegador.</p>`;
+                startScanBtn.classList.remove('hidden');
             }
         };
 
-        // Função do loop de escaneamento
-        const tick = () => {
-            if (scannerVideo.readyState === scannerVideo.HAVE_ENOUGH_DATA) {
-                scannerCanvas.height = scannerVideo.videoHeight;
-                scannerCanvas.width = scannerVideo.videoWidth;
-                const canvasContext = scannerCanvas.getContext('2d');
-                canvasContext.drawImage(scannerVideo, 0, 0, scannerCanvas.width, scannerCanvas.height);
-                const imageData = canvasContext.getImageData(0, 0, scannerCanvas.width, scannerCanvas.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                    inversionAttempts: 'dontInvert'
-                });
-
-                if (code) {
-                    // QR Code detectado!
-                    scannerVideo.srcObject.getTracks().forEach(track => track.stop());
-                    
-                    const url = code.data;
-                    const urlParams = new URLSearchParams(new URL(url).search);
-                    const scannedClientId = urlParams.get('clientId');
-                    
-                    if (scannedClientId) {
-                        let points = getPoints();
-                        if (points < TOTAL_POINTS) {
-                            points++;
-                            savePoints(points);
-                            scanFeedbackEl.textContent = `Ponto adicionado com sucesso! Cartão atualizado: ${points} de ${TOTAL_POINTS}.`;
-                            scanFeedbackEl.classList.remove('hidden');
-                        } else {
-                            scanFeedbackEl.textContent = 'Cliente já tem pontos suficientes para resgatar o prêmio!';
-                            scanFeedbackEl.classList.remove('hidden');
-                        }
-                    } else {
-                        scanFeedbackEl.textContent = 'QR Code inválido. Tente novamente.';
-                        scanFeedbackEl.classList.add('text-red-600');
-                        scanFeedbackEl.classList.remove('hidden');
-                    }
-                }
+        const stopScanner = () => {
+            if (scannerVideo.srcObject) {
+                scannerVideo.srcObject.getTracks().forEach(track => track.stop());
             }
-            // Chama a próxima "tick" do loop para continuar escaneando
-            requestAnimationFrame(tick);
+            scannerVideo.classList.add('hidden');
+            scannerPlaceholder.classList.remove('hidden');
+            startScanBtn.classList.remove('hidden');
+            cancelAnimationFrame(animationFrameId);
         };
         
-        // Evento de clique para gerar QR Code
         generateQrcodeBtn.addEventListener('click', () => {
             const url = window.location.href.split('?')[0] + `?clientId=${clientId}`;
             const qr = new QRious({
@@ -360,29 +382,26 @@
             qrcodeModal.classList.remove('hidden');
         });
 
-        // Evento de clique no botão para resgatar o prêmio
         redeemBtn.addEventListener('click', () => {
             redeemModal.classList.remove('hidden');
         });
         
-        // Evento de clique no botão de confirmar resgate no modal
         confirmRedeemBtn.addEventListener('click', () => {
             savePoints(0);
             renderCard();
             redeemModal.classList.add('hidden');
         });
         
-        // Evento de clique no botão de cancelar resgate no modal
         cancelRedeemBtn.addEventListener('click', () => {
             redeemModal.classList.add('hidden');
         });
 
-        // Evento de clique para fechar o modal do QR Code
         closeQrcodeModalBtn.addEventListener('click', () => {
             qrcodeModal.classList.add('hidden');
         });
+        
+        startScanBtn.addEventListener('click', startScanner);
 
-        // Lógica para determinar qual view renderizar
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('view') === 'cashier') {
             renderCashierView();
