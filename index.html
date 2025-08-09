@@ -38,22 +38,10 @@
             position: relative;
         }
         .point-filled {
-            background-color: #F4911C;
-            border-color: #F4911C;
+            background-color: #2563eb;
+            border-color: #2563eb;
             color: white;
             animation: pulse-fill 0.5s ease;
-        }
-        .logo-placeholder {
-            width: 100px;
-            height: 100px;
-            background-color: #cbd5e1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #64748b;
-            font-size: 1.5rem;
-            font-weight: 700;
-            border-radius: 100%;
         }
         .congrats {
             text-align: center;
@@ -62,6 +50,23 @@
             color: white;
             border-radius: 16px;
             animation: slide-in 0.5s ease;
+        }
+        .card {
+            border-radius: 30px;
+            background: #f7f9fc;
+            box-shadow: 15px 15px 30px #bebebe,
+                       -15px -15px 30px #ffffff;
+        }
+        /* Estilo para destacar o prêmio */
+        .prize-box {
+            background: linear-gradient(45deg, #fbbf24, #f59e0b);
+            color: #fff;
+            animation: pulse-prize 2s infinite;
+        }
+        @keyframes pulse-prize {
+            0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
         }
         @keyframes pulse-fill {
             0% { transform: scale(1); }
@@ -96,13 +101,13 @@
     </style>
 </head>
 <body class="bg-gray-100 p-4">
-    <!-- Container Principal -->
-    <div class="container bg-white shadow-xl rounded-2xl p-6 md:p-8 flex flex-col items-center">
+    <!-- Container Principal com o novo estilo de card -->
+    <div class="card container p-6 md:p-8 flex flex-col items-center">
         <!-- Cabeçalho -->
         <img src="https://framerusercontent.com/assets/e3aP9WnpRlweFQB6L7ZfaOLvk.png" alt="Logo do Chalé Guadalupe" class="w-24 h-24 mx-auto mb-4 rounded-full">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">Chalé Guadalupe</h1>
-        <p class="text-gray-500 mb-6">Cartão Fidelidade</p>
-        <p id="user-id-display" class="text-xs text-gray-400 mb-4 break-all text-center hidden"></p>
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Chalé Gudalupe</h1>
+        <p class="text-gray-500 mb-4">Cartão Fidelidade</p>
+        <button id="how-it-works-btn" class="text-sm text-blue-600 hover:underline mb-4">Como funciona?</button>
 
         <!-- Tela do Cliente -->
         <div id="client-view" class="hidden w-full flex flex-col items-center">
@@ -113,12 +118,17 @@
                 <p id="status-message" class="text-lg text-gray-700 font-semibold mb-6 text-center"></p>
                 <div id="points-grid" class="points-grid w-full"></div>
                 <div class="w-full flex flex-col gap-4 mt-8">
-                    <button id="generate-qrcode-btn" class="w-full bg-orange-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-orange-700 transition duration-300">
+                    <button id="generate-qrcode-btn" class="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-700 transition duration-300">
                         Gerar QR Code para Pontuar
                     </button>
                     <button id="redeem-btn" class="hidden w-full bg-green-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-600 transition duration-300">
                         Resgatar Prêmio Agora
                     </button>
+                </div>
+                <!-- Seção de Prêmio Destacada -->
+                <div class="prize-box mt-8 w-full p-4 rounded-xl text-center">
+                    <h4 class="font-bold text-white text-lg">Seu Prêmio te espera!</h4>
+                    <p id="prize-info" class="text-2xl font-extrabold text-white mt-1 drop-shadow-lg"></p>
                 </div>
             </div>
         </div>
@@ -134,7 +144,7 @@
                 <video id="scanner-video" class="hidden"></video>
                 <canvas id="scanner-canvas"></canvas>
             </div>
-            <button id="start-scan-btn" class="w-full bg-orange-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-orange-700 transition duration-300 mt-6">
+            <button id="start-scan-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-indigo-700 transition duration-300 mt-6">
                 Iniciar Scanner
             </button>
             <p id="scan-feedback" class="mt-4 text-center font-semibold hidden"></p>
@@ -158,6 +168,18 @@
                 </div>
             </div>
         </div>
+        <!-- Novo Modal: Como Funciona -->
+        <div id="how-it-works-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-xl p-8 max-w-sm w-full text-left shadow-2xl">
+                <h3 class="text-xl font-bold mb-6 text-center">Como Funciona</h3>
+                <ul class="space-y-4 text-gray-700">
+                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">1.</span><span>Quando for pagar a conta, clique em <strong>"Gerar QR Code"</strong> e mostre ao atendente para pontuar.</span></li>
+                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">2.</span><span>Complete os <strong>5 pontos</strong> para liberar seu prêmio.</span></li>
+                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">3.</span><span>Com o cartão cheio, apresente ao atendente e clique em <strong>"Resgatar Prêmio"</strong>.</span></li>
+                </ul>
+                <button id="close-how-it-works-modal" class="w-full bg-gray-300 text-gray-800 py-2 rounded-xl font-bold hover:bg-gray-400 transition mt-8">Entendi!</button>
+            </div>
+        </div>
     </div>
 
     <script type="module">
@@ -167,7 +189,6 @@
         import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURAÇÃO ---
-        // TODO: Substitua pelo seu objeto de configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyB_l_KIgNlxrmR2gSVW81EGGTrUQS0JYFc",
             authDomain: "fidelcard-d216d.firebaseapp.com",
@@ -177,8 +198,8 @@
             appId: "1:1037656229354:web:d444f2bcc4ccaa0fa01e93"
         };
         
-        const TOTAL_POINTS = 10;
-        const PRIZE_DESCRIPTION = "um café grátis";
+        const TOTAL_POINTS = 5;
+        const PRIZE_DESCRIPTION = "50% DE DESCONTO EM QUALQUER PRATO"; // Em maiúsculas para destaque
 
         // --- INICIALIZAÇÃO DO FIREBASE ---
         const app = initializeApp(firebaseConfig);
@@ -188,7 +209,6 @@
         // --- ELEMENTOS DO DOM ---
         const clientView = document.getElementById('client-view');
         const cashierView = document.getElementById('cashier-view');
-        const userIdDisplay = document.getElementById('user-id-display');
         
         // Elementos do Cliente
         const loadingState = document.getElementById('loading-state');
@@ -203,6 +223,10 @@
         const redeemModal = document.getElementById('redeem-modal');
         const confirmRedeemBtn = document.getElementById('confirm-redeem-btn');
         const cancelRedeemBtn = document.getElementById('cancel-redeem-btn');
+        const prizeInfoEl = document.getElementById('prize-info');
+        const howItWorksBtn = document.getElementById('how-it-works-btn');
+        const howItWorksModal = document.getElementById('how-it-works-modal');
+        const closeHowItWorksModalBtn = document.getElementById('close-how-it-works-modal');
 
         // Elementos do Atendente
         const scannerVideo = document.getElementById('scanner-video');
@@ -212,7 +236,7 @@
         const scanFeedbackEl = document.getElementById('scan-feedback');
 
         let currentUserId = null;
-        let unsubscribeCardListener = null; // Para parar de ouvir as atualizações do cartão
+        let unsubscribeCardListener = null; 
         let animationFrameId;
 
         // --- FUNÇÕES PRINCIPAIS ---
@@ -233,7 +257,7 @@
                 statusMessageEl.innerHTML = `
                     <div class="congrats">
                         <h2>PARABÉNS!</h2>
-                        <p>Você ganhou ${PRIZE_DESCRIPTION}!</p>
+                        <p>Você pode resgatar seu prêmio!</p>
                     </div>`;
                 generateQrcodeBtn.classList.add('hidden');
                 redeemBtn.classList.remove('hidden');
@@ -250,7 +274,6 @@
         const setupCardListener = (userId) => {
             const cardRef = doc(db, "loyalty_cards", userId);
             
-            // Cancela o listener anterior se existir
             if (unsubscribeCardListener) {
                 unsubscribeCardListener();
             }
@@ -260,7 +283,6 @@
                     const data = docSnap.data();
                     renderCard(data.points);
                 } else {
-                    // Se o cartão não existe, cria um novo com 0 pontos
                     await setDoc(cardRef, { points: 0, userId: userId });
                     renderCard(0);
                 }
@@ -290,8 +312,8 @@
                 scannerPlaceholder.classList.add('hidden');
                 scannerVideo.classList.remove('hidden');
                 startScanBtn.textContent = "Parar Scanner";
-                startScanBtn.classList.replace('bg-orange-600', 'bg-red-600');
-                startScanBtn.classList.replace('hover:bg-orange-700', 'hover:bg-red-700');
+                startScanBtn.classList.replace('bg-indigo-600', 'bg-red-600');
+                startScanBtn.classList.replace('hover:bg-indigo-700', 'hover:bg-red-700');
 
                 const canvasContext = scannerCanvas.getContext('2d', { willReadFrequently: true });
                 
@@ -307,7 +329,7 @@
 
                         if (code) {
                             handleScannedCode(code.data);
-                            return; // Para o loop de escaneamento
+                            return;
                         }
                     }
                     animationFrameId = requestAnimationFrame(scan);
@@ -328,8 +350,8 @@
             scannerVideo.classList.add('hidden');
             scannerPlaceholder.classList.remove('hidden');
             startScanBtn.textContent = "Iniciar Scanner";
-            startScanBtn.classList.replace('bg-red-600', 'bg-orange-600');
-            startScanBtn.classList.replace('hover:bg-red-700', 'hover:bg-orange-700');
+            startScanBtn.classList.replace('bg-red-600', 'bg-indigo-600');
+            startScanBtn.classList.replace('hover:bg-red-700', 'hover:bg-indigo-700');
             cancelAnimationFrame(animationFrameId);
         };
 
@@ -372,10 +394,8 @@
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Usuário está logado (anonimamente)
                 currentUserId = user.uid;
-                userIdDisplay.textContent = `Seu ID: ${currentUserId}`;
-                userIdDisplay.classList.remove('hidden');
+                prizeInfoEl.textContent = PRIZE_DESCRIPTION;
 
                 const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams.get('view') === 'cashier') {
@@ -385,7 +405,6 @@
                     setupCardListener(currentUserId);
                 }
             } else {
-                // Usuário não está logado, tenta logar anonimamente
                 signInAnonymously(auth).catch((error) => {
                     console.error("Erro no login anônimo:", error);
                     document.body.innerHTML = '<p>Ocorreu um erro ao iniciar. Verifique sua conexão e as configurações do Firebase.</p>';
@@ -398,7 +417,7 @@
             if (!currentUserId) return;
             new QRious({
                 element: qrcodeCanvas,
-                value: currentUserId, // O QR Code agora contém apenas o ID do usuário
+                value: currentUserId,
                 size: 256,
                 padding: 16
             });
@@ -413,9 +432,13 @@
         confirmRedeemBtn.addEventListener('click', async () => {
             if (!currentUserId) return;
             const cardRef = doc(db, "loyalty_cards", currentUserId);
-            await setDoc(cardRef, { points: 0, userId: currentUserId }); // Zera os pontos
+            await setDoc(cardRef, { points: 0, userId: currentUserId });
             redeemModal.classList.add('hidden');
         });
+
+        // Eventos do Modal "Como Funciona"
+        howItWorksBtn.addEventListener('click', () => howItWorksModal.classList.remove('hidden'));
+        closeHowItWorksModalBtn.addEventListener('click', () => howItWorksModal.classList.add('hidden'));
 
         // Eventos do Atendente
         startScanBtn.addEventListener('click', () => {
