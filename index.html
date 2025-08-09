@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fidelidade Flash - Restaurante Exemplo</title>
+    <title>FidCaard - Chalé Guadalupe</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -38,8 +38,8 @@
             position: relative;
         }
         .point-filled {
-            background-color: #2563eb;
-            border-color: #2563eb;
+            background-color: #F4911C;
+            border-color: #F4911C;
             color: white;
             animation: pulse-fill 0.5s ease;
         }
@@ -99,9 +99,9 @@
     <!-- Container Principal -->
     <div class="container bg-white shadow-xl rounded-2xl p-6 md:p-8 flex flex-col items-center">
         <!-- Cabeçalho -->
-        <div class="logo-placeholder mb-4">Logo</div>
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">Restaurante Exemplo</h1>
-        <p class="text-gray-500 mb-6">Cartão Fidelidade Flash</p>
+        <img src="https://framerusercontent.com/assets/e3aP9WnpRlweFQB6L7ZfaOLvk.png" alt="Logo do Chalé Guadalupe" class="w-24 h-24 mx-auto mb-4 rounded-full">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Chalé Guadalupe</h1>
+        <p class="text-gray-500 mb-6">Cartão Fidelidade</p>
         <p id="user-id-display" class="text-xs text-gray-400 mb-4 break-all text-center hidden"></p>
 
         <!-- Tela do Cliente -->
@@ -113,7 +113,7 @@
                 <p id="status-message" class="text-lg text-gray-700 font-semibold mb-6 text-center"></p>
                 <div id="points-grid" class="points-grid w-full"></div>
                 <div class="w-full flex flex-col gap-4 mt-8">
-                    <button id="generate-qrcode-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 transition duration-300">
+                    <button id="generate-qrcode-btn" class="w-full bg-orange-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-orange-700 transition duration-300">
                         Gerar QR Code para Pontuar
                     </button>
                     <button id="redeem-btn" class="hidden w-full bg-green-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-600 transition duration-300">
@@ -134,7 +134,7 @@
                 <video id="scanner-video" class="hidden"></video>
                 <canvas id="scanner-canvas"></canvas>
             </div>
-            <button id="start-scan-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-indigo-700 transition duration-300 mt-6">
+            <button id="start-scan-btn" class="w-full bg-orange-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-orange-700 transition duration-300 mt-6">
                 Iniciar Scanner
             </button>
             <p id="scan-feedback" class="mt-4 text-center font-semibold hidden"></p>
@@ -238,7 +238,7 @@
                 generateQrcodeBtn.classList.add('hidden');
                 redeemBtn.classList.remove('hidden');
             } else {
-                statusMessageEl.innerHTML = `Você tem <span class="font-bold text-blue-600 text-xl">${points}</span> de ${TOTAL_POINTS} pontos.`;
+                statusMessageEl.innerHTML = `Você tem <span class="font-bold text-orange-600 text-xl">${points}</span> de ${TOTAL_POINTS} pontos.`;
                 generateQrcodeBtn.classList.remove('hidden');
                 redeemBtn.classList.add('hidden');
             }
@@ -290,8 +290,8 @@
                 scannerPlaceholder.classList.add('hidden');
                 scannerVideo.classList.remove('hidden');
                 startScanBtn.textContent = "Parar Scanner";
-                startScanBtn.classList.replace('bg-indigo-600', 'bg-red-600');
-                startScanBtn.classList.replace('hover:bg-indigo-700', 'hover:bg-red-700');
+                startScanBtn.classList.replace('bg-orange-600', 'bg-red-600');
+                startScanBtn.classList.replace('hover:bg-orange-700', 'hover:bg-red-700');
 
                 const canvasContext = scannerCanvas.getContext('2d', { willReadFrequently: true });
                 
@@ -328,8 +328,8 @@
             scannerVideo.classList.add('hidden');
             scannerPlaceholder.classList.remove('hidden');
             startScanBtn.textContent = "Iniciar Scanner";
-            startScanBtn.classList.replace('bg-red-600', 'bg-indigo-600');
-            startScanBtn.classList.replace('hover:bg-red-700', 'hover:bg-indigo-700');
+            startScanBtn.classList.replace('bg-red-600', 'bg-orange-600');
+            startScanBtn.classList.replace('hover:bg-red-700', 'hover:bg-orange-700');
             cancelAnimationFrame(animationFrameId);
         };
 
@@ -429,4 +429,3 @@
     </script>
 </body>
 </html>
-
