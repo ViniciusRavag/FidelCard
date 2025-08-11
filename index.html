@@ -144,7 +144,7 @@
                 <video id="scanner-video" class="hidden"></video>
                 <canvas id="scanner-canvas"></canvas>
             </div>
-            <button id="start-scan-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-800 transition duration-300 mt-6">
+            <button id="start-scan-btn" class="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-800 transition duration-300 mt-6">
                 Iniciar Scanner
             </button>
             <p id="scan-feedback" class="mt-4 text-center font-semibold hidden"></p>
@@ -312,8 +312,8 @@
                 scannerPlaceholder.classList.add('hidden');
                 scannerVideo.classList.remove('hidden');
                 startScanBtn.textContent = "Parar Scanner";
-                startScanBtn.classList.replace('bg-indigo-600', 'bg-red-600');
-                startScanBtn.classList.replace('hover:bg-indigo-700', 'hover:bg-red-700');
+                startScanBtn.classList.replace('bg-green-600', 'bg-red-600');
+                startScanBtn.classList.replace('hover:bg-green-700', 'hover:bg-red-700');
 
                 const canvasContext = scannerCanvas.getContext('2d', { willReadFrequently: true });
                 
@@ -350,8 +350,8 @@
             scannerVideo.classList.add('hidden');
             scannerPlaceholder.classList.remove('hidden');
             startScanBtn.textContent = "Iniciar Scanner";
-            startScanBtn.classList.replace('bg-red-600', 'bg-indigo-600');
-            startScanBtn.classList.replace('hover:bg-red-700', 'hover:bg-indigo-700');
+            startScanBtn.classList.replace('bg-red-600', 'bg-green-600');
+            startScanBtn.classList.replace('hover:bg-red-700', 'hover:bg-green-700');
             cancelAnimationFrame(animationFrameId);
         };
 
@@ -452,3 +452,4 @@
     </script>
 </body>
 </html>
+
