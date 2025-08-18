@@ -98,6 +98,37 @@
             display: block;
         }
         .scanner-container canvas { display: none; }
+        .disabled-btn {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .name-input {
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 2px solid #FF9001;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #4b5563;
+            width: 100%;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .name-input:focus {
+            outline: none;
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 3px rgba(255, 144, 1, 0.2);
+        }
+        .welcome-message {
+            background: linear-gradient(45deg, #10b981, #059669);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            animation: slide-in 0.5s ease;
+        }
     </style>
 </head>
 <body class="bg-gray-100 p-4">
@@ -111,14 +142,32 @@
 
         <!-- Tela do Cliente -->
         <div id="client-view" class="hidden w-full flex flex-col items-center">
+            <!-- Seção de Nome do Cliente -->
+            <div id="name-section" class="w-full mb-6">
+                <label for="client-name" class="block text-white font-semibold mb-2 text-center">Cartão de:</label>
+                <input 
+                    type="text" 
+                    id="client-name" 
+                    class="name-input" 
+                    placeholder="Digite seu nome aqui"
+                    maxlength="30"
+                >
+                <p class="text-yellow-300 text-sm text-center mt-2">Digite seu nome para ativar o cartão fidelidade</p>
+            </div>
+
             <div id="loading-state" class="text-center p-8">
                 <p class="text-gray-600">Carregando seu cartão...</p>
             </div>
+            
             <div id="card-content" class="hidden w-full">
+                <div id="welcome-message" class="welcome-message hidden">
+                    <p>Olá, <span id="welcome-name"></span>! 👋</p>
+                </div>
+                
                 <p id="status-message" class="text-lg text-white font-semibold mb-6 text-center"></p>
                 <div id="points-grid" class="points-grid w-full"></div>
                 <div class="w-full flex flex-col gap-4 mt-8">
-                    <button id="generate-qrcode-btn" class="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-700 transition duration-300">
+                    <button id="generate-qrcode-btn" class="disabled-btn w-full bg-green-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-700 transition duration-300" disabled>
                         Gerar QR Code para Pontuar
                     </button>
                     <button id="redeem-btn" class="hidden w-full bg-green-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-600 transition duration-300">
@@ -168,14 +217,16 @@
                 </div>
             </div>
         </div>
-        <!-- Novo Modal: Como Funciona -->
+        <!-- Modal: Como Funciona -->
         <div id="how-it-works-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
             <div class="bg-white rounded-xl p-8 max-w-sm w-full text-left shadow-2xl">
                 <h3 class="text-xl font-bold mb-6 text-center">Como Funciona</h3>
                 <ul class="space-y-4 text-gray-700">
-                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">1.</span><span>Quando for pagar a conta, clique em <strong>"Gerar QR Code"</strong> e mostre ao atendente para pontuar.</span></li>
-                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">2.</span><span>Complete os <strong>5 pontos</strong> para liberar seu prêmio.</span></li>
-                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">3.</span><span>Com o cartão cheio, apresente ao atendente e clique em <strong>"Resgatar Prêmio"</strong>.</span></li>
+                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">1.</span><span>Digite seu <strong>nome</strong> no campo "Cartão de" para ativar o sistema.</span></li>
+                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">2.</span><span>Quando for pagar a conta, clique em <strong>"Gerar QR Code"</strong> e mostre ao atendente para pontuar.</span></li>
+                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">3.</span><span>Complete os <strong>5 pontos</strong> para liberar seu prêmio.</span></li>
+                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">4.</span><span>Com o cartão cheio, apresente ao atendente e clique em <strong>"Resgatar Prêmio"</strong>.</span></li>
+                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">💡</span><span>Seus pontos ficam salvos mesmo se trocar de celular ou limpar o cache!</span></li>
                 </ul>
                 <button id="close-how-it-works-modal" class="w-full bg-gray-300 text-gray-800 py-2 rounded-xl font-bold hover:bg-gray-400 transition mt-8">Entendi!</button>
             </div>
@@ -185,8 +236,7 @@
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, increment, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURAÇÃO ---
         const firebaseConfig = {
@@ -199,11 +249,10 @@
         };
         
         const TOTAL_POINTS = 5;
-        const PRIZE_DESCRIPTION = "50% DE DESCONTO EM QUALQUER PRATO"; // Em maiúsculas para destaque
+        const PRIZE_DESCRIPTION = "50% DE DESCONTO EM QUALQUER PRATO";
 
         // --- INICIALIZAÇÃO DO FIREBASE ---
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const db = getFirestore(app);
 
         // --- ELEMENTOS DO DOM ---
@@ -211,8 +260,12 @@
         const cashierView = document.getElementById('cashier-view');
         
         // Elementos do Cliente
+        const nameSection = document.getElementById('name-section');
+        const clientNameInput = document.getElementById('client-name');
         const loadingState = document.getElementById('loading-state');
         const cardContent = document.getElementById('card-content');
+        const welcomeMessage = document.getElementById('welcome-message');
+        const welcomeNameEl = document.getElementById('welcome-name');
         const statusMessageEl = document.getElementById('status-message');
         const pointsGridEl = document.getElementById('points-grid');
         const generateQrcodeBtn = document.getElementById('generate-qrcode-btn');
@@ -235,13 +288,59 @@
         const startScanBtn = document.getElementById('start-scan-btn');
         const scanFeedbackEl = document.getElementById('scan-feedback');
 
-        let currentUserId = null;
+        let currentClientName = null;
+        let currentCardId = null;
         let unsubscribeCardListener = null; 
         let animationFrameId;
 
         // --- FUNÇÕES PRINCIPAIS ---
 
-        const renderCard = (points) => {
+        const normalizeClientName = (name) => {
+            return name.trim().toLowerCase();
+        };
+
+        const generateCardId = (name) => {
+            return 'card_' + normalizeClientName(name).replace(/\s+/g, '_');
+        };
+
+        const findOrCreateCard = async (clientName) => {
+            const normalizedName = normalizeClientName(clientName);
+            const cardId = generateCardId(clientName);
+            
+            try {
+                console.log("Tentando acessar Firestore com cardId:", cardId);
+                const cardRef = doc(db, "loyalty_cards", cardId);
+                const cardDoc = await getDoc(cardRef);
+                
+                if (cardDoc.exists()) {
+                    // Cartão existente encontrado
+                    console.log("Cartão existente encontrado:", cardDoc.data());
+                    return { cardId, cardData: cardDoc.data(), isNew: false };
+                } else {
+                    // Criar novo cartão
+                    console.log("Criando novo cartão para:", clientName);
+                    const newCardData = {
+                        points: 0,
+                        clientName: clientName.trim(),
+                        normalizedName: normalizedName,
+                        cardId: cardId,
+                        createdAt: new Date().toISOString(),
+                        lastUpdated: new Date().toISOString()
+                    };
+                    
+                    await setDoc(cardRef, newCardData);
+                    console.log("Novo cartão criado com sucesso");
+                    return { cardId, cardData: newCardData, isNew: true };
+                }
+            } catch (error) {
+                console.error("Erro detalhado ao buscar/criar cartão:", error);
+                console.error("Código do erro:", error.code);
+                console.error("Mensagem do erro:", error.message);
+                throw error;
+            }
+        };
+
+        const renderCard = (points, clientName, isNewCard = false) => {
             pointsGridEl.innerHTML = '';
             for (let i = 1; i <= TOTAL_POINTS; i++) {
                 const pointDiv = document.createElement('div');
@@ -267,31 +366,120 @@
                 redeemBtn.classList.add('hidden');
             }
             
+            // Mostrar mensagem de boas-vindas
+            welcomeNameEl.textContent = clientName;
+            welcomeMessage.classList.remove('hidden');
+            
             loadingState.classList.add('hidden');
             cardContent.classList.remove('hidden');
         };
         
-        const setupCardListener = (userId) => {
-            const cardRef = doc(db, "loyalty_cards", userId);
+        const setupCardListener = (cardId) => {
+            const cardRef = doc(db, "loyalty_cards", cardId);
             
             if (unsubscribeCardListener) {
                 unsubscribeCardListener();
             }
 
-            unsubscribeCardListener = onSnapshot(cardRef, async (docSnap) => {
+            unsubscribeCardListener = onSnapshot(cardRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    renderCard(data.points);
-                } else {
-                    await setDoc(cardRef, { points: 0, userId: userId });
-                    renderCard(0);
+                    renderCard(data.points, data.clientName);
                 }
             });
+        };
+
+        const enableQRCodeButton = () => {
+            generateQrcodeBtn.disabled = false;
+            generateQrcodeBtn.classList.remove('disabled-btn');
+        };
+
+        const disableQRCodeButton = () => {
+            generateQrcodeBtn.disabled = true;
+            generateQrcodeBtn.classList.add('disabled-btn');
+        };
+
+        const handleNameInput = async () => {
+            const name = clientNameInput.value.trim();
+            
+            if (name.length < 2) {
+                disableQRCodeButton();
+                cardContent.classList.add('hidden');
+                return;
+            }
+
+            try {
+                console.log("Processando nome:", name);
+                loadingState.classList.remove('hidden');
+                cardContent.classList.add('hidden');
+                
+                const { cardId, cardData, isNew } = await findOrCreateCard(name);
+                
+                currentClientName = cardData.clientName;
+                currentCardId = cardId;
+                
+                // Salvar nome no localStorage para conveniência
+                try {
+                    localStorage.setItem('lastClientName', name);
+                } catch (e) {
+                    console.log("LocalStorage não disponível, continuando sem salvar nome");
+                }
+                
+                enableQRCodeButton();
+                setupCardListener(cardId);
+                
+            } catch (error) {
+                console.error("Erro ao processar nome:", error);
+                loadingState.classList.add('hidden');
+                cardContent.classList.remove('hidden');
+                
+                // Mostrar erro específico para permissões do Firebase
+                if (error.code === 'permission-denied') {
+                    statusMessageEl.innerHTML = `
+                        <div class="text-center p-4 bg-red-500 text-white rounded-lg">
+                            <h3 class="font-bold mb-2">⚠️ Erro de Configuração</h3>
+                            <p class="text-sm mb-2">As permissões do Firebase Firestore precisam ser configuradas.</p>
+                            <p class="text-xs">Configure as regras do Firestore para permitir leitura e escrita.</p>
+                        </div>
+                    `;
+                } else {
+                    statusMessageEl.innerHTML = `
+                        <div class="text-center p-4 bg-orange-500 text-white rounded-lg">
+                            <h3 class="font-bold mb-2">❌ Erro de Conexão</h3>
+                            <p class="text-sm">Não foi possível conectar com o banco de dados.</p>
+                            <p class="text-xs mt-2">Verifique sua conexão com a internet e tente novamente.</p>
+                        </div>
+                    `;
+                }
+                
+                // Permitir gerar QR Code mesmo com erro (modo offline)
+                enableQRCodeButton();
+                
+                // Simular dados para teste (remover em produção)
+                currentClientName = name;
+                currentCardId = generateCardId(name);
+                
+                // Renderizar cartão com 0 pontos para teste
+                setTimeout(() => {
+                    renderCard(0, name, true);
+                }, 500);
+            }
         };
 
         const showClientView = () => {
             clientView.classList.remove('hidden');
             cashierView.classList.add('hidden');
+            
+            // Tentar recuperar último nome usado (conveniência)
+            try {
+                const lastClientName = localStorage.getItem('lastClientName');
+                if (lastClientName) {
+                    clientNameInput.value = lastClientName;
+                    handleNameInput(); // Carregar automaticamente se tiver nome salvo
+                }
+            } catch (e) {
+                // Ignorar se localStorage não estiver disponível
+            }
         };
 
         const showCashierView = () => {
@@ -355,16 +543,16 @@
             cancelAnimationFrame(animationFrameId);
         };
 
-        const handleScannedCode = async (scannedUserId) => {
+        const handleScannedCode = async (scannedCardId) => {
             stopScanner();
-            if (!scannedUserId) {
+            if (!scannedCardId) {
                 scanFeedbackEl.textContent = 'QR Code inválido.';
                 scanFeedbackEl.className = 'mt-4 text-center font-semibold text-red-600';
                 scanFeedbackEl.classList.remove('hidden');
                 return;
             }
 
-            const cardRef = doc(db, "loyalty_cards", scannedUserId);
+            const cardRef = doc(db, "loyalty_cards", scannedCardId);
             
             try {
                 const cardDoc = await getDoc(cardRef);
@@ -372,13 +560,14 @@
                     scanFeedbackEl.textContent = 'Cartão do cliente não encontrado.';
                     scanFeedbackEl.className = 'mt-4 text-center font-semibold text-red-600';
                 } else if (cardDoc.data().points >= TOTAL_POINTS) {
-                    scanFeedbackEl.textContent = 'Cliente já completou o cartão!';
+                    scanFeedbackEl.textContent = `${cardDoc.data().clientName} já completou o cartão!`;
                     scanFeedbackEl.className = 'mt-4 text-center font-semibold text-yellow-600';
                 } else {
                     await updateDoc(cardRef, {
-                        points: increment(1)
+                        points: increment(1),
+                        lastUpdated: new Date().toISOString()
                     });
-                    scanFeedbackEl.textContent = 'Ponto adicionado com sucesso!';
+                    scanFeedbackEl.textContent = `Ponto adicionado para ${cardDoc.data().clientName}!`;
                     scanFeedbackEl.className = 'mt-4 text-center font-semibold text-green-600';
                 }
             } catch (error) {
@@ -392,32 +581,44 @@
 
         // --- INICIALIZAÇÃO E EVENTOS ---
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUserId = user.uid;
-                prizeInfoEl.textContent = PRIZE_DESCRIPTION;
+        // Inicializar aplicação
+        prizeInfoEl.textContent = PRIZE_DESCRIPTION;
 
-                const urlParams = new URLSearchParams(window.location.search);
-                if (urlParams.get('view') === 'cashier') {
-                    showCashierView();
-                } else {
-                    showClientView();
-                    setupCardListener(currentUserId);
-                }
-            } else {
-                signInAnonymously(auth).catch((error) => {
-                    console.error("Erro no login anônimo:", error);
-                    document.body.innerHTML = '<p>Ocorreu um erro ao iniciar. Verifique sua conexão e as configurações do Firebase.</p>';
-                });
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('view') === 'cashier') {
+            showCashierView();
+        } else {
+            showClientView();
+        }
+
+        // Eventos do Campo de Nome
+        clientNameInput.addEventListener('input', debounce(handleNameInput, 500));
+        clientNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleNameInput();
             }
         });
 
+        // Função debounce para evitar muitas chamadas
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
         // Eventos do Cliente
         generateQrcodeBtn.addEventListener('click', () => {
-            if (!currentUserId) return;
+            if (!currentCardId || generateQrcodeBtn.disabled) return;
+            
             new QRious({
                 element: qrcodeCanvas,
-                value: currentUserId,
+                value: currentCardId,
                 size: 256,
                 padding: 16
             });
@@ -430,9 +631,12 @@
         cancelRedeemBtn.addEventListener('click', () => redeemModal.classList.add('hidden'));
         
         confirmRedeemBtn.addEventListener('click', async () => {
-            if (!currentUserId) return;
-            const cardRef = doc(db, "loyalty_cards", currentUserId);
-            await setDoc(cardRef, { points: 0, userId: currentUserId });
+            if (!currentCardId) return;
+            const cardRef = doc(db, "loyalty_cards", currentCardId);
+            await updateDoc(cardRef, { 
+                points: 0, 
+                lastUpdated: new Date().toISOString() 
+            });
             redeemModal.classList.add('hidden');
         });
 
@@ -452,4 +656,3 @@
     </script>
 </body>
 </html>
-
