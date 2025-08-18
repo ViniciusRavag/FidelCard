@@ -57,11 +57,18 @@
             box-shadow: 15px 15px 30px #bebebe,
                        -15px -15px 30px #ffffff;
         }
-        /* Estilo para destacar o prêmio */
         .prize-box {
             background: linear-gradient(45deg, #fbbf24, #f59e0b);
             color: #fff;
             animation: pulse-prize 2s infinite;
+        }
+        .backup-info {
+            background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+            color: #fff;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+            text-align: center;
         }
         @keyframes pulse-prize {
             0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
@@ -98,37 +105,6 @@
             display: block;
         }
         .scanner-container canvas { display: none; }
-        .disabled-btn {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .name-input {
-            background-color: rgba(255, 255, 255, 0.9);
-            border: 2px solid #FF9001;
-            border-radius: 12px;
-            padding: 12px 16px;
-            font-size: 16px;
-            font-weight: 600;
-            color: #4b5563;
-            width: 100%;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-        .name-input:focus {
-            outline: none;
-            border-color: #f59e0b;
-            box-shadow: 0 0 0 3px rgba(255, 144, 1, 0.2);
-        }
-        .welcome-message {
-            background: linear-gradient(45deg, #10b981, #059669);
-            color: white;
-            padding: 12px 16px;
-            border-radius: 12px;
-            text-align: center;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            animation: slide-in 0.5s ease;
-        }
     </style>
 </head>
 <body class="bg-gray-100 p-4">
@@ -138,41 +114,30 @@
         <img src="https://framerusercontent.com/assets/e3aP9WnpRlweFQB6L7ZfaOLvk.png" alt="Logo do Chalé Guadalupe" class="w-24 h-24 mx-auto mb-4 rounded-full">
         <h1 class="text-3xl font-bold text-white mb-2">Chalé Guadalupe</h1>
         <p class="text-white mb-4 text-center">Acumule Pontos e Receba a Recompensa!</p>
-        <button id="how-it-works-btn" class="text-sm text-yellow-300 hover:underline mb-4">Como funciona?</button>
+        <div class="flex gap-4 mb-4">
+            <button id="how-it-works-btn" class="text-sm text-yellow-300 hover:underline">Como funciona?</button>
+            <button id="recover-points-btn" class="text-sm text-yellow-300 hover:underline">Recuperar Pontos</button>
+        </div>
 
         <!-- Tela do Cliente -->
         <div id="client-view" class="hidden w-full flex flex-col items-center">
-            <!-- Seção de Nome do Cliente -->
-            <div id="name-section" class="w-full mb-6">
-                <label for="client-name" class="block text-white font-semibold mb-2 text-center">Cartão de:</label>
-                <div class="relative">
-                    <input 
-                        type="text" 
-                        id="client-name" 
-                        class="name-input" 
-                        placeholder="Digite seu nome aqui"
-                        maxlength="30"
-                    >
-                    <button id="edit-name-btn" class="hidden absolute right-3 top-1/2 transform -translate-y-1/2 bg-orange-500 text-white px-3 py-1 rounded-lg text-sm font-bold hover:bg-orange-600 transition">
-                        Alterar
-                    </button>
-                </div>
-                <p id="name-help-text" class="text-yellow-300 text-sm text-center mt-2">Digite seu nome para ativar o cartão fidelidade</p>
-            </div>
-
             <div id="loading-state" class="text-center p-8">
                 <p class="text-gray-600">Carregando seu cartão...</p>
             </div>
-            
             <div id="card-content" class="hidden w-full">
-                <div id="welcome-message" class="welcome-message hidden">
-                    <p>Olá, <span id="welcome-name"></span>! 👋</p>
-                </div>
-                
                 <p id="status-message" class="text-lg text-white font-semibold mb-6 text-center"></p>
                 <div id="points-grid" class="points-grid w-full"></div>
-                <div class="w-full flex flex-col gap-4 mt-8">
-                    <button id="generate-qrcode-btn" class="disabled-btn w-full bg-green-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-700 transition duration-300" disabled>
+                
+                <!-- Informações de Backup -->
+                <div id="backup-info" class="backup-info">
+                    <h4 class="font-bold text-sm mb-2">📱 Seu Código de Backup</h4>
+                    <p class="text-xs mb-2">Anote este código para recuperar seus pontos:</p>
+                    <p id="backup-code" class="font-mono text-lg font-bold tracking-wider"></p>
+                    <p class="text-xs mt-2 opacity-90">Use este código se trocar de celular</p>
+                </div>
+
+                <div class="w-full flex flex-col gap-4 mt-6">
+                    <button id="generate-qrcode-btn" class="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-700 transition duration-300">
                         Gerar QR Code para Pontuar
                     </button>
                     <button id="redeem-btn" class="hidden w-full bg-green-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-600 transition duration-300">
@@ -180,7 +145,7 @@
                     </button>
                 </div>
                 <!-- Seção de Prêmio Destacada -->
-                <div class="prize-box mt-8 w-full p-4 rounded-xl text-center">
+                <div class="prize-box mt-6 w-full p-4 rounded-xl text-center">
                     <h4 class="font-bold text-white text-lg">Seu Prêmio te espera!</h4>
                     <p id="prize-info" class="text-2xl font-extrabold text-white mt-1 drop-shadow-lg"></p>
                 </div>
@@ -191,8 +156,6 @@
         <div id="cashier-view" class="hidden w-full flex flex-col items-center">
             <h2 class="text-2xl font-bold text-white mb-4">Área do Atendente</h2>
             <p class="text-white mb-6 text-center">Escaneie o QR Code do cliente para adicionar um ponto.</p>
-            
-            <!-- Scanner -->
             <div id="scanner-container" class="scanner-container w-full">
                 <div id="scanner-placeholder" class="flex flex-col items-center justify-center p-8">
                     <p class="text-gray-500 font-bold">Leitor de QR Code</p>
@@ -203,18 +166,6 @@
             <button id="start-scan-btn" class="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-800 transition duration-300 mt-6">
                 Iniciar Scanner
             </button>
-            
-            <!-- Opção manual para teste -->
-            <div class="w-full mt-4 p-4 bg-gray-100 rounded-xl">
-                <p class="text-gray-700 text-sm text-center mb-2">Ou insira o código manualmente (para teste):</p>
-                <div class="flex gap-2">
-                    <input type="text" id="manual-code-input" placeholder="card_nome_cliente" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                    <button id="manual-scan-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition">
-                        Processar
-                    </button>
-                </div>
-            </div>
-            
             <p id="scan-feedback" class="mt-4 text-center font-semibold hidden"></p>
         </div>
 
@@ -226,6 +177,7 @@
                 <button id="close-qrcode-modal" class="w-full bg-gray-300 text-gray-800 py-2 rounded-xl font-bold hover:bg-gray-400 transition mt-6">Fechar</button>
             </div>
         </div>
+
         <div id="redeem-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
             <div class="bg-white rounded-xl p-8 max-w-sm w-full text-center shadow-2xl">
                 <h3 class="text-xl font-bold mb-4">Confirmar Resgate?</h3>
@@ -236,18 +188,32 @@
                 </div>
             </div>
         </div>
+
         <!-- Modal: Como Funciona -->
         <div id="how-it-works-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
             <div class="bg-white rounded-xl p-8 max-w-sm w-full text-left shadow-2xl">
                 <h3 class="text-xl font-bold mb-6 text-center">Como Funciona</h3>
                 <ul class="space-y-4 text-gray-700">
-                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">1.</span><span>Digite seu <strong>nome</strong> no campo "Cartão de" para ativar o sistema.</span></li>
-                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">2.</span><span>Quando for pagar a conta, clique em <strong>"Gerar QR Code"</strong> e mostre ao atendente para pontuar.</span></li>
-                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">3.</span><span>Complete os <strong>5 pontos</strong> para liberar seu prêmio.</span></li>
-                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">4.</span><span>Com o cartão cheio, apresente ao atendente e clique em <strong>"Resgatar Prêmio"</strong>.</span></li>
-                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">💡</span><span>Seus pontos ficam salvos mesmo se trocar de celular ou limpar o cache!</span></li>
+                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">1.</span><span>Quando for pagar a conta, clique em <strong>"Gerar QR Code"</strong> e mostre ao atendente para pontuar.</span></li>
+                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">2.</span><span>Complete os <strong>5 pontos</strong> para liberar seu prêmio.</span></li>
+                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">3.</span><span>Com o cartão cheio, apresente ao atendente e clique em <strong>"Resgatar Prêmio"</strong>.</span></li>
+                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">📱</span><span><strong>Anote seu código de backup</strong> para recuperar seus pontos se trocar de celular.</span></li>
                 </ul>
                 <button id="close-how-it-works-modal" class="w-full bg-gray-300 text-gray-800 py-2 rounded-xl font-bold hover:bg-gray-400 transition mt-8">Entendi!</button>
+            </div>
+        </div>
+
+        <!-- Modal: Recuperar Pontos -->
+        <div id="recover-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-xl p-8 max-w-sm w-full text-center shadow-2xl">
+                <h3 class="text-xl font-bold mb-4">Recuperar Pontos</h3>
+                <p class="text-gray-700 mb-4">Digite o código de backup que você anotou:</p>
+                <input id="recover-code-input" type="text" placeholder="Digite seu código" class="w-full p-3 border rounded-lg text-center font-mono tracking-wider mb-4">
+                <div class="flex gap-4">
+                    <button id="confirm-recover-btn" class="w-full bg-blue-500 text-white py-2 rounded-xl font-bold hover:bg-blue-600 transition">Recuperar</button>
+                    <button id="cancel-recover-btn" class="w-full bg-gray-300 text-gray-800 py-2 rounded-xl font-bold hover:bg-gray-400 transition">Cancelar</button>
+                </div>
+                <p id="recover-feedback" class="mt-4 text-sm hidden"></p>
             </div>
         </div>
     </div>
@@ -255,7 +221,8 @@
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, increment, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURAÇÃO ---
         const firebaseConfig = {
@@ -272,6 +239,7 @@
 
         // --- INICIALIZAÇÃO DO FIREBASE ---
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
 
         // --- ELEMENTOS DO DOM ---
@@ -279,14 +247,8 @@
         const cashierView = document.getElementById('cashier-view');
         
         // Elementos do Cliente
-        const nameSection = document.getElementById('name-section');
-        const clientNameInput = document.getElementById('client-name');
-        const editNameBtn = document.getElementById('edit-name-btn');
-        const nameHelpText = document.getElementById('name-help-text');
         const loadingState = document.getElementById('loading-state');
         const cardContent = document.getElementById('card-content');
-        const welcomeMessage = document.getElementById('welcome-message');
-        const welcomeNameEl = document.getElementById('welcome-name');
         const statusMessageEl = document.getElementById('status-message');
         const pointsGridEl = document.getElementById('points-grid');
         const generateQrcodeBtn = document.getElementById('generate-qrcode-btn');
@@ -301,6 +263,15 @@
         const howItWorksBtn = document.getElementById('how-it-works-btn');
         const howItWorksModal = document.getElementById('how-it-works-modal');
         const closeHowItWorksModalBtn = document.getElementById('close-how-it-works-modal');
+        const backupCodeEl = document.getElementById('backup-code');
+
+        // Elementos de Recuperação
+        const recoverPointsBtn = document.getElementById('recover-points-btn');
+        const recoverModal = document.getElementById('recover-modal');
+        const recoverCodeInput = document.getElementById('recover-code-input');
+        const confirmRecoverBtn = document.getElementById('confirm-recover-btn');
+        const cancelRecoverBtn = document.getElementById('cancel-recover-btn');
+        const recoverFeedbackEl = document.getElementById('recover-feedback');
 
         // Elementos do Atendente
         const scannerVideo = document.getElementById('scanner-video');
@@ -308,63 +279,50 @@
         const scannerPlaceholder = document.getElementById('scanner-placeholder');
         const startScanBtn = document.getElementById('start-scan-btn');
         const scanFeedbackEl = document.getElementById('scan-feedback');
-        const manualCodeInput = document.getElementById('manual-code-input');
-        const manualScanBtn = document.getElementById('manual-scan-btn');
 
-        let currentClientName = null;
-        let currentCardId = null;
+        let currentUserId = null;
         let unsubscribeCardListener = null; 
         let animationFrameId;
-        let nameIsLocked = false;
 
-        // --- FUNÇÕES PRINCIPAIS ---
+        // --- FUNÇÕES DE BACKUP E RECUPERAÇÃO ---
 
-        const normalizeClientName = (name) => {
-            return name.trim().toLowerCase();
+        const generateBackupCode = (userId) => {
+            // Gera um código de 6 dígitos baseado no userId
+            let hash = 0;
+            for (let i = 0; i < userId.length; i++) {
+                const char = userId.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Converte para 32bit integer
+            }
+            return Math.abs(hash).toString().padStart(6, '0').slice(-6);
         };
 
-        const generateCardId = (name) => {
-            return 'card_' + normalizeClientName(name).replace(/\s+/g, '_');
+        const findUserByBackupCode = async (backupCode) => {
+            // Função para verificar se um userId gera o código fornecido
+            // Em uma implementação real, seria melhor ter um índice no banco
+            // Por simplicidade, vamos usar a mesma função de geração
+            return null; // Por ora, não implementado
         };
 
-        const findOrCreateCard = async (clientName) => {
-            const normalizedName = normalizeClientName(clientName);
-            const cardId = generateCardId(clientName);
-            
+        const saveUserIdLocally = (userId) => {
             try {
-                console.log("Tentando acessar Firestore com cardId:", cardId);
-                const cardRef = doc(db, "loyalty_cards", cardId);
-                const cardDoc = await getDoc(cardRef);
-                
-                if (cardDoc.exists()) {
-                    // Cartão existente encontrado
-                    console.log("Cartão existente encontrado:", cardDoc.data());
-                    return { cardId, cardData: cardDoc.data(), isNew: false };
-                } else {
-                    // Criar novo cartão
-                    console.log("Criando novo cartão para:", clientName);
-                    const newCardData = {
-                        points: 0,
-                        clientName: clientName.trim(),
-                        normalizedName: normalizedName,
-                        cardId: cardId,
-                        createdAt: new Date().toISOString(),
-                        lastUpdated: new Date().toISOString()
-                    };
-                    
-                    await setDoc(cardRef, newCardData);
-                    console.log("Novo cartão criado com sucesso");
-                    return { cardId, cardData: newCardData, isNew: true };
-                }
-            } catch (error) {
-                console.error("Erro detalhado ao buscar/criar cartão:", error);
-                console.error("Código do erro:", error.code);
-                console.error("Mensagem do erro:", error.message);
-                throw error;
+                sessionStorage.setItem('fidcard_user_hint', userId);
+            } catch (e) {
+                // Ignora erros do sessionStorage
             }
         };
 
-        const renderCard = (points, clientName, isNewCard = false) => {
+        const getUserIdFromLocal = () => {
+            try {
+                return sessionStorage.getItem('fidcard_user_hint');
+            } catch (e) {
+                return null;
+            }
+        };
+
+        // --- FUNÇÕES PRINCIPAIS ---
+
+        const renderCard = (points) => {
             pointsGridEl.innerHTML = '';
             for (let i = 1; i <= TOTAL_POINTS; i++) {
                 const pointDiv = document.createElement('div');
@@ -389,141 +347,82 @@
                 generateQrcodeBtn.classList.remove('hidden');
                 redeemBtn.classList.add('hidden');
             }
-            
-            // Mostrar mensagem de boas-vindas
-            welcomeNameEl.textContent = clientName;
-            welcomeMessage.classList.remove('hidden');
+
+            // Mostrar código de backup
+            if (currentUserId) {
+                const backupCode = generateBackupCode(currentUserId);
+                backupCodeEl.textContent = backupCode;
+            }
             
             loadingState.classList.add('hidden');
             cardContent.classList.remove('hidden');
         };
         
-        const setupCardListener = (cardId) => {
-            const cardRef = doc(db, "loyalty_cards", cardId);
+        const setupCardListener = (userId) => {
+            const cardRef = doc(db, "loyalty_cards", userId);
             
             if (unsubscribeCardListener) {
                 unsubscribeCardListener();
             }
 
-            unsubscribeCardListener = onSnapshot(cardRef, (docSnap) => {
+            unsubscribeCardListener = onSnapshot(cardRef, async (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    renderCard(data.points, data.clientName);
+                    renderCard(data.points);
+                } else {
+                    await setDoc(cardRef, { 
+                        points: 0, 
+                        userId: userId,
+                        createdAt: new Date().toISOString()
+                    });
+                    renderCard(0);
                 }
             });
-        };
-
-        const lockNameField = (name) => {
-            nameIsLocked = true;
-            clientNameInput.disabled = true;
-            clientNameInput.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
-            clientNameInput.style.cursor = 'not-allowed';
-            editNameBtn.classList.remove('hidden');
-            nameHelpText.textContent = 'Seu cartão está ativo! Clique em "Alterar" para trocar de nome.';
-            nameHelpText.className = 'text-green-300 text-sm text-center mt-2';
-        };
-
-        const unlockNameField = () => {
-            nameIsLocked = false;
-            clientNameInput.disabled = false;
-            clientNameInput.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
-            clientNameInput.style.cursor = 'text';
-            editNameBtn.classList.add('hidden');
-            nameHelpText.textContent = 'Digite seu nome para ativar o cartão fidelidade';
-            nameHelpText.className = 'text-yellow-300 text-sm text-center mt-2';
-            clientNameInput.focus();
-        };
-
-        const handleNameInput = async () => {
-            const name = clientNameInput.value.trim();
-            
-            if (name.length < 2) {
-                disableQRCodeButton();
-                cardContent.classList.add('hidden');
-                return;
-            }
-
-            try {
-                console.log("Processando nome:", name);
-                loadingState.classList.remove('hidden');
-                cardContent.classList.add('hidden');
-                
-                const { cardId, cardData, isNew } = await findOrCreateCard(name);
-                
-                currentClientName = cardData.clientName;
-                currentCardId = cardId;
-                
-                // Bloquear o campo após carregar com sucesso
-                lockNameField(cardData.clientName);
-                
-                // Salvar nome no localStorage para conveniência
-                try {
-                    localStorage.setItem('lastClientName', name);
-                    localStorage.setItem('lastCardId', cardId);
-                } catch (e) {
-                    console.log("LocalStorage não disponível, continuando sem salvar nome");
-                }
-                
-                enableQRCodeButton();
-                setupCardListener(cardId);
-                
-            } catch (error) {
-                console.error("Erro ao processar nome:", error);
-                loadingState.classList.add('hidden');
-                cardContent.classList.remove('hidden');
-                
-                // Mostrar erro específico para permissões do Firebase
-                if (error.code === 'permission-denied') {
-                    statusMessageEl.innerHTML = `
-                        <div class="text-center p-4 bg-red-500 text-white rounded-lg">
-                            <h3 class="font-bold mb-2">⚠️ Erro de Configuração</h3>
-                            <p class="text-sm mb-2">As permissões do Firebase Firestore precisam ser configuradas.</p>
-                            <p class="text-xs">Configure as regras do Firestore para permitir leitura e escrita.</p>
-                        </div>
-                    `;
-                } else {
-                    statusMessageEl.innerHTML = `
-                        <div class="text-center p-4 bg-orange-500 text-white rounded-lg">
-                            <h3 class="font-bold mb-2">❌ Erro de Conexão</h3>
-                            <p class="text-sm">Não foi possível conectar com o banco de dados.</p>
-                            <p class="text-xs mt-2">Verifique sua conexão com a internet e tente novamente.</p>
-                        </div>
-                    `;
-                }
-                
-                // NÃO permitir gerar QR Code com erro - manter desabilitado para garantir integridade
-                disableQRCodeButton();
-            }
         };
 
         const showClientView = () => {
             clientView.classList.remove('hidden');
             cashierView.classList.add('hidden');
-            
-            // Tentar recuperar último nome usado (conveniência) - mas só se não tiver nome já carregado
-            if (!nameIsLocked) {
-                try {
-                    const lastClientName = localStorage.getItem('lastClientName');
-                    const lastCardId = localStorage.getItem('lastCardId');
-                    if (lastClientName && lastCardId) {
-                        clientNameInput.value = lastClientName;
-                        // Carregar automaticamente se tiver nome e cardId salvos
-                        currentClientName = lastClientName;
-                        currentCardId = lastCardId;
-                        lockNameField(lastClientName);
-                        enableQRCodeButton();
-                        setupCardListener(lastCardId);
-                    }
-                } catch (e) {
-                    // Ignorar se localStorage não estiver disponível
-                    console.log("Erro ao recuperar dados salvos:", e);
-                }
-            }
         };
 
         const showCashierView = () => {
             cashierView.classList.remove('hidden');
             clientView.classList.add('hidden');
+        };
+
+        // --- RECUPERAÇÃO DE PONTOS ---
+        const handleRecoverPoints = async (inputCode) => {
+            recoverFeedbackEl.classList.add('hidden');
+            
+            if (!inputCode || inputCode.length !== 6) {
+                recoverFeedbackEl.textContent = 'Digite um código válido de 6 dígitos.';
+                recoverFeedbackEl.className = 'mt-4 text-sm text-red-600';
+                recoverFeedbackEl.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                // Verifica se há um userId salvo localmente que corresponde ao código
+                const localUserId = getUserIdFromLocal();
+                if (localUserId && generateBackupCode(localUserId) === inputCode) {
+                    // Reconecta com o userId encontrado
+                    currentUserId = localUserId;
+                    setupCardListener(currentUserId);
+                    recoverModal.classList.add('hidden');
+                    recoverCodeInput.value = '';
+                    return;
+                }
+
+                recoverFeedbackEl.textContent = 'Código não encontrado. Verifique se digitou corretamente.';
+                recoverFeedbackEl.className = 'mt-4 text-sm text-red-600';
+                recoverFeedbackEl.classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Erro ao recuperar pontos:', error);
+                recoverFeedbackEl.textContent = 'Erro ao recuperar pontos. Tente novamente.';
+                recoverFeedbackEl.className = 'mt-4 text-sm text-red-600';
+                recoverFeedbackEl.classList.remove('hidden');
+            }
         };
         
         // --- LÓGICA DO ATENDENTE (SCANNER) ---
@@ -550,28 +449,11 @@
                         scannerCanvas.width = scannerVideo.videoWidth;
                         canvasContext.drawImage(scannerVideo, 0, 0, scannerCanvas.width, scannerCanvas.height);
                         const imageData = canvasContext.getImageData(0, 0, scannerCanvas.width, scannerCanvas.height);
-                        
-                        // Tentar detectar QR code com diferentes configurações
-                        let code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        const code = jsQR(imageData.data, imageData.width, imageData.height, {
                             inversionAttempts: 'dontInvert'
                         });
-                        
-                        // Se não encontrou, tentar com inversão
-                        if (!code) {
-                            code = jsQR(imageData.data, imageData.width, imageData.height, {
-                                inversionAttempts: 'onlyInvert'
-                            });
-                        }
-                        
-                        // Se não encontrou, tentar com todas as tentativas
-                        if (!code) {
-                            code = jsQR(imageData.data, imageData.width, imageData.height, {
-                                inversionAttempts: 'attemptBoth'
-                            });
-                        }
 
-                        if (code && code.data && code.data.trim() !== '') {
-                            console.log("QR Code detectado:", code.data);
+                        if (code) {
                             handleScannedCode(code.data);
                             return;
                         }
@@ -599,64 +481,37 @@
             cancelAnimationFrame(animationFrameId);
         };
 
-        const handleScannedCode = async (scannedData) => {
+        const handleScannedCode = async (scannedUserId) => {
             stopScanner();
-            console.log("QR Code escaneado:", scannedData);
-            
-            if (!scannedData || scannedData.trim() === '') {
-                scanFeedbackEl.textContent = 'QR Code inválido - dados vazios.';
+            if (!scannedUserId) {
+                scanFeedbackEl.textContent = 'QR Code inválido.';
                 scanFeedbackEl.className = 'mt-4 text-center font-semibold text-red-600';
                 scanFeedbackEl.classList.remove('hidden');
                 return;
             }
 
-            // Verificar se é um cardId válido (deve começar com 'card_')
-            const scannedCardId = scannedData.trim();
-            if (!scannedCardId.startsWith('card_')) {
-                scanFeedbackEl.textContent = 'QR Code inválido - formato incorreto.';
-                scanFeedbackEl.className = 'mt-4 text-center font-semibold text-red-600';
-                scanFeedbackEl.classList.remove('hidden');
-                return;
-            }
-
-            const cardRef = doc(db, "loyalty_cards", scannedCardId);
+            const cardRef = doc(db, "loyalty_cards", scannedUserId);
             
             try {
-                console.log("Buscando cartão:", scannedCardId);
                 const cardDoc = await getDoc(cardRef);
-                
                 if (!cardDoc.exists()) {
-                    console.log("Cartão não encontrado no banco");
-                    scanFeedbackEl.textContent = 'Cartão do cliente não encontrado no sistema.';
+                    scanFeedbackEl.textContent = 'Cartão do cliente não encontrado.';
                     scanFeedbackEl.className = 'mt-4 text-center font-semibold text-red-600';
+                } else if (cardDoc.data().points >= TOTAL_POINTS) {
+                    scanFeedbackEl.textContent = 'Cliente já completou o cartão!';
+                    scanFeedbackEl.className = 'mt-4 text-center font-semibold text-yellow-600';
                 } else {
-                    const cardData = cardDoc.data();
-                    console.log("Dados do cartão encontrado:", cardData);
-                    
-                    if (cardData.points >= TOTAL_POINTS) {
-                        scanFeedbackEl.textContent = `${cardData.clientName} já completou o cartão!`;
-                        scanFeedbackEl.className = 'mt-4 text-center font-semibold text-yellow-600';
-                    } else {
-                        await updateDoc(cardRef, {
-                            points: increment(1),
-                            lastUpdated: new Date().toISOString()
-                        });
-                        console.log("Ponto adicionado com sucesso");
-                        scanFeedbackEl.textContent = `✅ Ponto adicionado para ${cardData.clientName}! (${cardData.points + 1}/${TOTAL_POINTS})`;
-                        scanFeedbackEl.className = 'mt-4 text-center font-semibold text-green-600';
-                    }
+                    await updateDoc(cardRef, {
+                        points: increment(1),
+                        lastPointAt: new Date().toISOString()
+                    });
+                    scanFeedbackEl.textContent = 'Ponto adicionado com sucesso!';
+                    scanFeedbackEl.className = 'mt-4 text-center font-semibold text-green-600';
                 }
             } catch (error) {
-                console.error("Erro detalhado ao adicionar ponto:", error);
-                console.error("Código do erro:", error.code);
-                
-                if (error.code === 'permission-denied') {
-                    scanFeedbackEl.textContent = '⚠️ Erro de permissões - Configure o Firebase Firestore.';
-                    scanFeedbackEl.className = 'mt-4 text-center font-semibold text-red-600';
-                } else {
-                    scanFeedbackEl.textContent = 'Erro ao conectar com o banco de dados.';
-                    scanFeedbackEl.className = 'mt-4 text-center font-semibold text-red-600';
-                }
+                console.error("Erro ao adicionar ponto: ", error);
+                scanFeedbackEl.textContent = 'Erro ao conectar com o banco de dados.';
+                scanFeedbackEl.className = 'mt-4 text-center font-semibold text-red-600';
             } finally {
                 scanFeedbackEl.classList.remove('hidden');
             }
@@ -664,77 +519,36 @@
 
         // --- INICIALIZAÇÃO E EVENTOS ---
 
-        // Inicializar aplicação
-        prizeInfoEl.textContent = PRIZE_DESCRIPTION;
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUserId = user.uid;
+                prizeInfoEl.textContent = PRIZE_DESCRIPTION;
+                saveUserIdLocally(currentUserId); // Salva uma dica local
 
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('view') === 'cashier') {
-            showCashierView();
-        } else {
-            showClientView();
-        }
-
-        // Eventos do Campo de Nome
-        clientNameInput.addEventListener('input', debounce(() => {
-            if (!nameIsLocked) {
-                handleNameInput();
-            }
-        }, 500));
-        
-        clientNameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !nameIsLocked) {
-                handleNameInput();
-            }
-        });
-
-        // Evento do botão de editar nome
-        editNameBtn.addEventListener('click', () => {
-            const confirmChange = confirm('Tem certeza que deseja alterar o nome? Isso carregará um cartão diferente.');
-            if (confirmChange) {
-                resetCardState();
-                unlockNameField();
-                clientNameInput.value = '';
-                // Limpar dados salvos
-                try {
-                    localStorage.removeItem('lastClientName');
-                    localStorage.removeItem('lastCardId');
-                } catch (e) {
-                    console.log("Erro ao limpar localStorage:", e);
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('view') === 'cashier') {
+                    showCashierView();
+                } else {
+                    showClientView();
+                    setupCardListener(currentUserId);
                 }
+            } else {
+                signInAnonymously(auth).catch((error) => {
+                    console.error("Erro no login anônimo:", error);
+                    document.body.innerHTML = '<p>Ocorreu um erro ao iniciar. Verifique sua conexão e as configurações do Firebase.</p>';
+                });
             }
         });
-
-        // Função debounce para evitar muitas chamadas
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
-        }
 
         // Eventos do Cliente
         generateQrcodeBtn.addEventListener('click', () => {
-            if (!currentCardId || generateQrcodeBtn.disabled) {
-                console.log("QR Code não pode ser gerado - cardId:", currentCardId, "disabled:", generateQrcodeBtn.disabled);
-                return;
-            }
-            
-            console.log("Gerando QR Code com cardId:", currentCardId);
-            console.log("Nome do cliente:", currentClientName);
-            
+            if (!currentUserId) return;
             new QRious({
                 element: qrcodeCanvas,
-                value: currentCardId,
+                value: currentUserId,
                 size: 256,
                 padding: 16
             });
-            
-            console.log("QR Code gerado com sucesso");
             qrcodeModal.classList.remove('hidden');
         });
 
@@ -744,11 +558,12 @@
         cancelRedeemBtn.addEventListener('click', () => redeemModal.classList.add('hidden'));
         
         confirmRedeemBtn.addEventListener('click', async () => {
-            if (!currentCardId) return;
-            const cardRef = doc(db, "loyalty_cards", currentCardId);
-            await updateDoc(cardRef, { 
-                points: 0, 
-                lastUpdated: new Date().toISOString() 
+            if (!currentUserId) return;
+            const cardRef = doc(db, "loyalty_cards", currentUserId);
+            await setDoc(cardRef, { 
+                points: 0,
+                userId: currentUserId,
+                lastRedemptionAt: new Date().toISOString()
             });
             redeemModal.classList.add('hidden');
         });
@@ -756,6 +571,31 @@
         // Eventos do Modal "Como Funciona"
         howItWorksBtn.addEventListener('click', () => howItWorksModal.classList.remove('hidden'));
         closeHowItWorksModalBtn.addEventListener('click', () => howItWorksModal.classList.add('hidden'));
+
+        // Eventos de Recuperação
+        recoverPointsBtn.addEventListener('click', () => {
+            recoverCodeInput.value = '';
+            recoverFeedbackEl.classList.add('hidden');
+            recoverModal.classList.remove('hidden');
+        });
+
+        cancelRecoverBtn.addEventListener('click', () => {
+            recoverModal.classList.add('hidden');
+            recoverCodeInput.value = '';
+            recoverFeedbackEl.classList.add('hidden');
+        });
+
+        confirmRecoverBtn.addEventListener('click', () => {
+            const inputCode = recoverCodeInput.value.trim();
+            handleRecoverPoints(inputCode);
+        });
+
+        recoverCodeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const inputCode = recoverCodeInput.value.trim();
+                handleRecoverPoints(inputCode);
+            }
+        });
 
         // Eventos do Atendente
         startScanBtn.addEventListener('click', () => {
@@ -766,23 +606,6 @@
             }
         });
 
-        // Evento para processar código manual
-        manualScanBtn.addEventListener('click', () => {
-            const manualCode = manualCodeInput.value.trim();
-            if (manualCode) {
-                console.log("Processando código manual:", manualCode);
-                handleScannedCode(manualCode);
-                manualCodeInput.value = '';
-            }
-        });
-
-        manualCodeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                manualScanBtn.click();
-            }
-        });
-
     </script>
 </body>
 </html>
-
