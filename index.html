@@ -543,10 +543,21 @@
             cancelAnimationFrame(animationFrameId);
         };
 
-        const handleScannedCode = async (scannedCardId) => {
+        const handleScannedCode = async (scannedData) => {
             stopScanner();
-            if (!scannedCardId) {
-                scanFeedbackEl.textContent = 'QR Code inválido.';
+            console.log("QR Code escaneado:", scannedData);
+            
+            if (!scannedData || scannedData.trim() === '') {
+                scanFeedbackEl.textContent = 'QR Code inválido - dados vazios.';
+                scanFeedbackEl.className = 'mt-4 text-center font-semibold text-red-600';
+                scanFeedbackEl.classList.remove('hidden');
+                return;
+            }
+
+            // Verificar se é um cardId válido (deve começar com 'card_')
+            const scannedCardId = scannedData.trim();
+            if (!scannedCardId.startsWith('card_')) {
+                scanFeedbackEl.textContent = 'QR Code inválido - formato incorreto.';
                 scanFeedbackEl.className = 'mt-4 text-center font-semibold text-red-600';
                 scanFeedbackEl.classList.remove('hidden');
                 return;
@@ -555,25 +566,41 @@
             const cardRef = doc(db, "loyalty_cards", scannedCardId);
             
             try {
+                console.log("Buscando cartão:", scannedCardId);
                 const cardDoc = await getDoc(cardRef);
+                
                 if (!cardDoc.exists()) {
-                    scanFeedbackEl.textContent = 'Cartão do cliente não encontrado.';
+                    console.log("Cartão não encontrado no banco");
+                    scanFeedbackEl.textContent = 'Cartão do cliente não encontrado no sistema.';
                     scanFeedbackEl.className = 'mt-4 text-center font-semibold text-red-600';
-                } else if (cardDoc.data().points >= TOTAL_POINTS) {
-                    scanFeedbackEl.textContent = `${cardDoc.data().clientName} já completou o cartão!`;
-                    scanFeedbackEl.className = 'mt-4 text-center font-semibold text-yellow-600';
                 } else {
-                    await updateDoc(cardRef, {
-                        points: increment(1),
-                        lastUpdated: new Date().toISOString()
-                    });
-                    scanFeedbackEl.textContent = `Ponto adicionado para ${cardDoc.data().clientName}!`;
-                    scanFeedbackEl.className = 'mt-4 text-center font-semibold text-green-600';
+                    const cardData = cardDoc.data();
+                    console.log("Dados do cartão encontrado:", cardData);
+                    
+                    if (cardData.points >= TOTAL_POINTS) {
+                        scanFeedbackEl.textContent = `${cardData.clientName} já completou o cartão!`;
+                        scanFeedbackEl.className = 'mt-4 text-center font-semibold text-yellow-600';
+                    } else {
+                        await updateDoc(cardRef, {
+                            points: increment(1),
+                            lastUpdated: new Date().toISOString()
+                        });
+                        console.log("Ponto adicionado com sucesso");
+                        scanFeedbackEl.textContent = `✅ Ponto adicionado para ${cardData.clientName}! (${cardData.points + 1}/${TOTAL_POINTS})`;
+                        scanFeedbackEl.className = 'mt-4 text-center font-semibold text-green-600';
+                    }
                 }
             } catch (error) {
-                console.error("Erro ao adicionar ponto: ", error);
-                scanFeedbackEl.textContent = 'Erro ao conectar com o banco de dados.';
-                scanFeedbackEl.className = 'mt-4 text-center font-semibold text-red-600';
+                console.error("Erro detalhado ao adicionar ponto:", error);
+                console.error("Código do erro:", error.code);
+                
+                if (error.code === 'permission-denied') {
+                    scanFeedbackEl.textContent = '⚠️ Erro de permissões - Configure o Firebase Firestore.';
+                    scanFeedbackEl.className = 'mt-4 text-center font-semibold text-red-600';
+                } else {
+                    scanFeedbackEl.textContent = 'Erro ao conectar com o banco de dados.';
+                    scanFeedbackEl.className = 'mt-4 text-center font-semibold text-red-600';
+                }
             } finally {
                 scanFeedbackEl.classList.remove('hidden');
             }
