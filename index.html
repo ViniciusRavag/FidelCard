@@ -63,7 +63,7 @@
             animation: pulse-prize 2s infinite;
         }
         .backup-info {
-            background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+            background: #9F0402;
             color: #fff;
             border-radius: 12px;
             padding: 1rem;
@@ -130,10 +130,10 @@
                 
                 <!-- Informações de Backup -->
                 <div id="backup-info" class="backup-info">
-                    <h4 class="font-bold text-sm mb-2">📱 Seu Código de Backup</h4>
+                    <h4 class="font-bold text-sm mb-2">Código do Seu Cartão Fidelidade</h4>
                     <p class="text-xs mb-2">Anote este código para recuperar seus pontos:</p>
                     <p id="backup-code" class="font-mono text-lg font-bold tracking-wider"></p>
-                    <p class="text-xs mt-2 opacity-90">Use este código se trocar de celular</p>
+                    <p class="text-xs mt-2 opacity-90">Use este código se seus pontos desaparecerem</p>
                 </div>
 
                 <div class="w-full flex flex-col gap-4 mt-6">
@@ -197,7 +197,7 @@
                     <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">1.</span><span>Quando for pagar a conta, clique em <strong>"Gerar QR Code"</strong> e mostre ao atendente para pontuar.</span></li>
                     <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">2.</span><span>Complete os <strong>5 pontos</strong> para liberar seu prêmio.</span></li>
                     <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">3.</span><span>Com o cartão cheio, apresente ao atendente e clique em <strong>"Resgatar Prêmio"</strong>.</span></li>
-                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">📱</span><span><strong>Anote seu código de backup</strong> para recuperar seus pontos se trocar de celular.</span></li>
+                    <li class="flex items-start"><span class="mr-3 text-orange-500 font-bold">📱</span><span><strong>Anote o código do seu cartão</strong> para recuperar seus pontos se trocar de celular ou limpar o cache.</span></li>
                 </ul>
                 <button id="close-how-it-works-modal" class="w-full bg-gray-300 text-gray-800 py-2 rounded-xl font-bold hover:bg-gray-400 transition mt-8">Entendi!</button>
             </div>
@@ -210,7 +210,7 @@
                 <p class="text-gray-700 mb-4">Digite o código de backup que você anotou:</p>
                 <input id="recover-code-input" type="text" placeholder="Digite seu código" class="w-full p-3 border rounded-lg text-center font-mono tracking-wider mb-4">
                 <div class="flex gap-4">
-                    <button id="confirm-recover-btn" class="w-full bg-blue-500 text-white py-2 rounded-xl font-bold hover:bg-blue-600 transition">Recuperar</button>
+                    <button id="confirm-recover-btn" class="w-full bg-green-500 text-white py-2 rounded-xl font-bold hover:bg-green-500 transition">Recuperar</button>
                     <button id="cancel-recover-btn" class="w-full bg-gray-300 text-gray-800 py-2 rounded-xl font-bold hover:bg-gray-400 transition">Cancelar</button>
                 </div>
                 <p id="recover-feedback" class="mt-4 text-sm hidden"></p>
@@ -339,6 +339,7 @@
                     <div class="congrats">
                         <h2>PARABÉNS!</h2>
                         <p>Você pode resgatar seu prêmio!</p>
+                        <p class="text-white mb-4 text-center">Mostre essa tela para o atendente</p>
                     </div>`;
                 generateQrcodeBtn.classList.add('hidden');
                 redeemBtn.classList.remove('hidden');
@@ -609,3 +610,4 @@
     </script>
 </body>
 </html>
+
