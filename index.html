@@ -1,4 +1,25 @@
-<!DOCTYPE html>
+const enableQRCodeButton = () => {
+            generateQrcodeBtn.disabled = false;
+            generateQrcodeBtn.classList.remove('disabled-btn');
+        };
+
+        const disableQRCodeButton = () => {
+            generateQrcodeBtn.disabled = true;
+            generateQrcodeBtn.classList.add('disabled-btn');
+        };
+
+        const resetCardState = () => {
+            currentClientName = null;
+            currentCardId = null;
+            nameIsLocked = false;
+            disableQRCodeButton();
+            cardContent.classList.add('hidden');
+            welcomeMessage.classList.add('hidden');
+            if (unsubscribeCardListener) {
+                unsubscribeCardListener();
+                unsubscribeCardListener = null;
+            }
+        };<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -145,14 +166,19 @@
             <!-- Seção de Nome do Cliente -->
             <div id="name-section" class="w-full mb-6">
                 <label for="client-name" class="block text-white font-semibold mb-2 text-center">Cartão de:</label>
-                <input 
-                    type="text" 
-                    id="client-name" 
-                    class="name-input" 
-                    placeholder="Digite seu nome aqui"
-                    maxlength="30"
-                >
-                <p class="text-yellow-300 text-sm text-center mt-2">Digite seu nome para ativar o cartão fidelidade</p>
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        id="client-name" 
+                        class="name-input" 
+                        placeholder="Digite seu nome aqui"
+                        maxlength="30"
+                    >
+                    <button id="edit-name-btn" class="hidden absolute right-3 top-1/2 transform -translate-y-1/2 bg-orange-500 text-white px-3 py-1 rounded-lg text-sm font-bold hover:bg-orange-600 transition">
+                        Alterar
+                    </button>
+                </div>
+                <p id="name-help-text" class="text-yellow-300 text-sm text-center mt-2">Digite seu nome para ativar o cartão fidelidade</p>
             </div>
 
             <div id="loading-state" class="text-center p-8">
@@ -186,6 +212,8 @@
         <div id="cashier-view" class="hidden w-full flex flex-col items-center">
             <h2 class="text-2xl font-bold text-white mb-4">Área do Atendente</h2>
             <p class="text-white mb-6 text-center">Escaneie o QR Code do cliente para adicionar um ponto.</p>
+            
+            <!-- Scanner -->
             <div id="scanner-container" class="scanner-container w-full">
                 <div id="scanner-placeholder" class="flex flex-col items-center justify-center p-8">
                     <p class="text-gray-500 font-bold">Leitor de QR Code</p>
@@ -196,6 +224,18 @@
             <button id="start-scan-btn" class="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-800 transition duration-300 mt-6">
                 Iniciar Scanner
             </button>
+            
+            <!-- Opção manual para teste -->
+            <div class="w-full mt-4 p-4 bg-gray-100 rounded-xl">
+                <p class="text-gray-700 text-sm text-center mb-2">Ou insira o código manualmente (para teste):</p>
+                <div class="flex gap-2">
+                    <input type="text" id="manual-code-input" placeholder="card_nome_cliente" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <button id="manual-scan-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition">
+                        Processar
+                    </button>
+                </div>
+            </div>
+            
             <p id="scan-feedback" class="mt-4 text-center font-semibold hidden"></p>
         </div>
 
@@ -262,6 +302,8 @@
         // Elementos do Cliente
         const nameSection = document.getElementById('name-section');
         const clientNameInput = document.getElementById('client-name');
+        const editNameBtn = document.getElementById('edit-name-btn');
+        const nameHelpText = document.getElementById('name-help-text');
         const loadingState = document.getElementById('loading-state');
         const cardContent = document.getElementById('card-content');
         const welcomeMessage = document.getElementById('welcome-message');
@@ -287,11 +329,14 @@
         const scannerPlaceholder = document.getElementById('scanner-placeholder');
         const startScanBtn = document.getElementById('start-scan-btn');
         const scanFeedbackEl = document.getElementById('scan-feedback');
+        const manualCodeInput = document.getElementById('manual-code-input');
+        const manualScanBtn = document.getElementById('manual-scan-btn');
 
         let currentClientName = null;
         let currentCardId = null;
         let unsubscribeCardListener = null; 
         let animationFrameId;
+        let nameIsLocked = false;
 
         // --- FUNÇÕES PRINCIPAIS ---
 
@@ -389,14 +434,25 @@
             });
         };
 
-        const enableQRCodeButton = () => {
-            generateQrcodeBtn.disabled = false;
-            generateQrcodeBtn.classList.remove('disabled-btn');
+        const lockNameField = (name) => {
+            nameIsLocked = true;
+            clientNameInput.disabled = true;
+            clientNameInput.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+            clientNameInput.style.cursor = 'not-allowed';
+            editNameBtn.classList.remove('hidden');
+            nameHelpText.textContent = 'Seu cartão está ativo! Clique em "Alterar" para trocar de nome.';
+            nameHelpText.className = 'text-green-300 text-sm text-center mt-2';
         };
 
-        const disableQRCodeButton = () => {
-            generateQrcodeBtn.disabled = true;
-            generateQrcodeBtn.classList.add('disabled-btn');
+        const unlockNameField = () => {
+            nameIsLocked = false;
+            clientNameInput.disabled = false;
+            clientNameInput.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+            clientNameInput.style.cursor = 'text';
+            editNameBtn.classList.add('hidden');
+            nameHelpText.textContent = 'Digite seu nome para ativar o cartão fidelidade';
+            nameHelpText.className = 'text-yellow-300 text-sm text-center mt-2';
+            clientNameInput.focus();
         };
 
         const handleNameInput = async () => {
@@ -418,9 +474,13 @@
                 currentClientName = cardData.clientName;
                 currentCardId = cardId;
                 
+                // Bloquear o campo após carregar com sucesso
+                lockNameField(cardData.clientName);
+                
                 // Salvar nome no localStorage para conveniência
                 try {
                     localStorage.setItem('lastClientName', name);
+                    localStorage.setItem('lastCardId', cardId);
                 } catch (e) {
                     console.log("LocalStorage não disponível, continuando sem salvar nome");
                 }
@@ -452,17 +512,8 @@
                     `;
                 }
                 
-                // Permitir gerar QR Code mesmo com erro (modo offline)
-                enableQRCodeButton();
-                
-                // Simular dados para teste (remover em produção)
-                currentClientName = name;
-                currentCardId = generateCardId(name);
-                
-                // Renderizar cartão com 0 pontos para teste
-                setTimeout(() => {
-                    renderCard(0, name, true);
-                }, 500);
+                // NÃO permitir gerar QR Code com erro - manter desabilitado para garantir integridade
+                disableQRCodeButton();
             }
         };
 
@@ -470,15 +521,24 @@
             clientView.classList.remove('hidden');
             cashierView.classList.add('hidden');
             
-            // Tentar recuperar último nome usado (conveniência)
-            try {
-                const lastClientName = localStorage.getItem('lastClientName');
-                if (lastClientName) {
-                    clientNameInput.value = lastClientName;
-                    handleNameInput(); // Carregar automaticamente se tiver nome salvo
+            // Tentar recuperar último nome usado (conveniência) - mas só se não tiver nome já carregado
+            if (!nameIsLocked) {
+                try {
+                    const lastClientName = localStorage.getItem('lastClientName');
+                    const lastCardId = localStorage.getItem('lastCardId');
+                    if (lastClientName && lastCardId) {
+                        clientNameInput.value = lastClientName;
+                        // Carregar automaticamente se tiver nome e cardId salvos
+                        currentClientName = lastClientName;
+                        currentCardId = lastCardId;
+                        lockNameField(lastClientName);
+                        enableQRCodeButton();
+                        setupCardListener(lastCardId);
+                    }
+                } catch (e) {
+                    // Ignorar se localStorage não estiver disponível
+                    console.log("Erro ao recuperar dados salvos:", e);
                 }
-            } catch (e) {
-                // Ignorar se localStorage não estiver disponível
             }
         };
 
@@ -511,11 +571,28 @@
                         scannerCanvas.width = scannerVideo.videoWidth;
                         canvasContext.drawImage(scannerVideo, 0, 0, scannerCanvas.width, scannerCanvas.height);
                         const imageData = canvasContext.getImageData(0, 0, scannerCanvas.width, scannerCanvas.height);
-                        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        
+                        // Tentar detectar QR code com diferentes configurações
+                        let code = jsQR(imageData.data, imageData.width, imageData.height, {
                             inversionAttempts: 'dontInvert'
                         });
+                        
+                        // Se não encontrou, tentar com inversão
+                        if (!code) {
+                            code = jsQR(imageData.data, imageData.width, imageData.height, {
+                                inversionAttempts: 'onlyInvert'
+                            });
+                        }
+                        
+                        // Se não encontrou, tentar com todas as tentativas
+                        if (!code) {
+                            code = jsQR(imageData.data, imageData.width, imageData.height, {
+                                inversionAttempts: 'attemptBoth'
+                            });
+                        }
 
-                        if (code) {
+                        if (code && code.data && code.data.trim() !== '') {
+                            console.log("QR Code detectado:", code.data);
                             handleScannedCode(code.data);
                             return;
                         }
@@ -619,10 +696,32 @@
         }
 
         // Eventos do Campo de Nome
-        clientNameInput.addEventListener('input', debounce(handleNameInput, 500));
-        clientNameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
+        clientNameInput.addEventListener('input', debounce(() => {
+            if (!nameIsLocked) {
                 handleNameInput();
+            }
+        }, 500));
+        
+        clientNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !nameIsLocked) {
+                handleNameInput();
+            }
+        });
+
+        // Evento do botão de editar nome
+        editNameBtn.addEventListener('click', () => {
+            const confirmChange = confirm('Tem certeza que deseja alterar o nome? Isso carregará um cartão diferente.');
+            if (confirmChange) {
+                resetCardState();
+                unlockNameField();
+                clientNameInput.value = '';
+                // Limpar dados salvos
+                try {
+                    localStorage.removeItem('lastClientName');
+                    localStorage.removeItem('lastCardId');
+                } catch (e) {
+                    console.log("Erro ao limpar localStorage:", e);
+                }
             }
         });
 
@@ -641,7 +740,13 @@
 
         // Eventos do Cliente
         generateQrcodeBtn.addEventListener('click', () => {
-            if (!currentCardId || generateQrcodeBtn.disabled) return;
+            if (!currentCardId || generateQrcodeBtn.disabled) {
+                console.log("QR Code não pode ser gerado - cardId:", currentCardId, "disabled:", generateQrcodeBtn.disabled);
+                return;
+            }
+            
+            console.log("Gerando QR Code com cardId:", currentCardId);
+            console.log("Nome do cliente:", currentClientName);
             
             new QRious({
                 element: qrcodeCanvas,
@@ -649,6 +754,8 @@
                 size: 256,
                 padding: 16
             });
+            
+            console.log("QR Code gerado com sucesso");
             qrcodeModal.classList.remove('hidden');
         });
 
@@ -677,6 +784,22 @@
                 stopScanner();
             } else {
                 startScanner();
+            }
+        });
+
+        // Evento para processar código manual
+        manualScanBtn.addEventListener('click', () => {
+            const manualCode = manualCodeInput.value.trim();
+            if (manualCode) {
+                console.log("Processando código manual:", manualCode);
+                handleScannedCode(manualCode);
+                manualCodeInput.value = '';
+            }
+        });
+
+        manualCodeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                manualScanBtn.click();
             }
         });
 
