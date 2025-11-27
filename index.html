@@ -683,6 +683,9 @@
         let currentUserId = null;
         let unsubscribeCardListener = null;
 
+        // Get App ID correctly (Fixes permissions)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
         // --- UI UTILS ---
         window.switchTab = (tab) => {
             currentTab = tab;
@@ -1134,7 +1137,7 @@
         };
 
         const setupCardListener = (userId) => {
-            const cardRef = doc(db, "loyalty_cards", userId);
+            const cardRef = doc(db, 'artifacts', appId, 'users', userId, "loyalty_cards_v2", "card");
             if (unsubscribeCardListener) unsubscribeCardListener();
 
             unsubscribeCardListener = onSnapshot(cardRef, async (docSnap) => {
@@ -1155,15 +1158,20 @@
             const display = document.getElementById('generated-code-display');
             const text = document.getElementById('cashier-code-text');
 
-            // Save to Firestore so validation works
-            await addDoc(collection(db, "active_codes"), {
-                code: code,
-                active: true,
-                createdAt: new Date()
-            });
+            try {
+                // FIXED: Use correct public path structure to avoid permission errors
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'active_codes'), {
+                    code: code,
+                    active: true,
+                    createdAt: new Date().toISOString()
+                });
 
-            text.textContent = code;
-            display.classList.remove('hidden');
+                text.textContent = code;
+                display.classList.remove('hidden');
+            } catch (error) {
+                console.error("Error generating code:", error);
+                alert("Erro ao gerar código. Tente novamente.");
+            }
         };
 
         // 2. Client claims a code
@@ -1178,35 +1186,41 @@
             feedback.textContent = "Verificando...";
             feedback.className = "text-center text-sm font-bold mb-4 text-gray-500 animate-pulse";
 
-            // Query Firestore
-            const q = query(collection(db, "active_codes"), where("code", "==", code), where("active", "==", true));
-            const querySnapshot = await getDocs(q);
+            try {
+                // FIXED: Use correct public path structure
+                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'active_codes'), where("code", "==", code), where("active", "==", true));
+                const querySnapshot = await getDocs(q);
 
-            if (!querySnapshot.empty) {
-                // Valid!
-                const docRef = querySnapshot.docs[0].ref;
-                
-                // 1. Delete or deactivate code
-                await deleteDoc(docRef);
+                if (!querySnapshot.empty) {
+                    // Valid!
+                    const docRef = querySnapshot.docs[0].ref;
+                    
+                    // 1. Delete or deactivate code
+                    await deleteDoc(docRef);
 
-                // 2. Add point
-                const cardRef = doc(db, "loyalty_cards", currentUserId);
-                await updateDoc(cardRef, { points: increment(1) });
+                    // 2. Add point (Using fixed user path)
+                    const cardRef = doc(db, 'artifacts', appId, 'users', currentUserId, "loyalty_cards_v2", "card");
+                    await updateDoc(cardRef, { points: increment(1) });
 
-                // Success Feedback
-                feedback.className = "text-center text-sm font-bold mb-4 text-green-600";
-                feedback.innerHTML = "<i class='fa-solid fa-check'></i> Código Válido! Ponto adicionado.";
-                
-                setTimeout(() => {
-                    document.getElementById('code-input-modal').classList.add('hidden');
-                    input.value = "";
-                    feedback.classList.add('hidden');
-                }, 1500);
+                    // Success Feedback
+                    feedback.className = "text-center text-sm font-bold mb-4 text-green-600";
+                    feedback.innerHTML = "<i class='fa-solid fa-check'></i> Código Válido! Ponto adicionado.";
+                    
+                    setTimeout(() => {
+                        document.getElementById('code-input-modal').classList.add('hidden');
+                        input.value = "";
+                        feedback.classList.add('hidden');
+                    }, 1500);
 
-            } else {
-                // Invalid
+                } else {
+                    // Invalid
+                    feedback.className = "text-center text-sm font-bold mb-4 text-red-500";
+                    feedback.textContent = "Código inválido ou expirado.";
+                }
+            } catch (error) {
+                console.error("Error claiming code:", error);
                 feedback.className = "text-center text-sm font-bold mb-4 text-red-500";
-                feedback.textContent = "Código inválido ou expirado.";
+                feedback.textContent = "Erro ao verificar código.";
             }
         };
 
@@ -1239,7 +1253,7 @@
         window.finalizeDeliveryRedeem = async () => {
             // Deduct points
             if (!currentUserId) return;
-            const cardRef = doc(db, "loyalty_cards", currentUserId);
+            const cardRef = doc(db, 'artifacts', appId, 'users', currentUserId, "loyalty_cards_v2", "card");
             
             // In real app, we would save this voucher to DB to validade later
             await setDoc(cardRef, { points: 0, userId: currentUserId, lastRedemptionAt: new Date().toISOString() });
@@ -1297,7 +1311,7 @@
         document.getElementById('confirm-redeem-btn').addEventListener('click', async () => {
             if (!currentUserId) return;
             document.getElementById('redeem-modal').classList.add('hidden');
-            const cardRef = doc(db, "loyalty_cards", currentUserId);
+            const cardRef = doc(db, 'artifacts', appId, 'users', currentUserId, "loyalty_cards_v2", "card");
             await setDoc(cardRef, { points: 0, userId: currentUserId, lastRedemptionAt: new Date().toISOString() });
         });
 
@@ -1376,7 +1390,8 @@
             }
 
             async function handleScan(scannedId) {
-                const cardRef = doc(db, "loyalty_cards", scannedId);
+                // FIXED: Use correct user path
+                const cardRef = doc(db, 'artifacts', appId, 'users', scannedId, "loyalty_cards_v2", "card");
                 try {
                     const snap = await getDoc(cardRef);
                     if (!snap.exists()) {
@@ -1401,4 +1416,5 @@
     </script>
 </body>
 </html>
+
 
