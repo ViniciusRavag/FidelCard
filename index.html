@@ -198,7 +198,7 @@
             <div class="bg-gradient-to-r from-brand-main to-brand-dark rounded-2xl p-4 mb-6 text-white shadow-lg relative overflow-hidden">
                 <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-brand-accent/30 rounded-full blur-xl"></div>
                 <h2 class="text-xl font-bold relative z-10">Sabores do México</h2>
-                <p class="text-xs text-white/80 relative z-10">Faça seu pedido e consulte seu Cartão Fidelidade.</p>
+                <p class="text-xs text-white/80 relative z-10">Peça agora e pontue no fidelidade.</p>
             </div>
 
             <!-- Products Grid -->
@@ -217,7 +217,7 @@
                     <div class="absolute inset-0 bg-brand-accent rounded-full blur-md opacity-50"></div>
                     <img src="https://framerusercontent.com/assets/e3aP9WnpRlweFQB6L7ZfaOLvk.png" alt="Logo" class="relative w-full h-full object-cover rounded-full border-4 border-white/20 shadow-lg">
                 </div>
-                <p class="text-white/80 text-sm font-light">Bem Vindo ao seu Cartão Fidelidade</p>
+                <p class="text-white/80 text-sm font-light">Seus pontos valem muito</p>
             </div>
 
             <!-- LOADING STATE -->
@@ -267,34 +267,46 @@
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
-                <button id="generate-qrcode-btn" class="w-full bg-white text-brand-main font-bold text-lg py-4 px-6 rounded-2xl shadow-xl hover:shadow-2xl hover:bg-gray-50 active:scale-95 transition-all duration-200 flex items-center justify-between group">
-                    <span class="flex items-center gap-3">
+                <!-- Action Buttons: QR & Delivery Code -->
+                <div class="grid grid-cols-2 gap-3">
+                    <!-- QR Code (Presencial) -->
+                    <button id="generate-qrcode-btn" class="bg-white text-brand-main font-bold p-4 rounded-2xl shadow-xl hover:shadow-2xl hover:bg-gray-50 active:scale-95 transition-all duration-200 flex flex-col items-center justify-center gap-2 group h-32">
                         <div class="w-10 h-10 rounded-full bg-brand-main text-white flex items-center justify-center group-hover:rotate-12 transition-transform">
                             <i class="fa-solid fa-qrcode"></i>
                         </div>
-                        <span class="flex flex-col text-left leading-tight">
-                            <span>Pontuar</span>
-                            <span class="text-xs font-normal text-gray-500">Gerar QR Code</span>
+                        <span class="text-xs text-center leading-tight">
+                            <span class="block font-bold text-sm">No Caixa</span>
+                            <span class="text-[10px] text-gray-500 font-normal">Mostrar QR Code</span>
                         </span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right text-gray-300"></i>
-                </button>
+                    </button>
+
+                    <!-- Input Code (Delivery) -->
+                    <button onclick="document.getElementById('code-input-modal').classList.remove('hidden')" class="bg-white text-brand-accent font-bold p-4 rounded-2xl shadow-xl hover:shadow-2xl hover:bg-gray-50 active:scale-95 transition-all duration-200 flex flex-col items-center justify-center gap-2 group h-32 border border-brand-accent/20">
+                        <div class="w-10 h-10 rounded-full bg-brand-accent text-white flex items-center justify-center group-hover:-rotate-12 transition-transform">
+                            <i class="fa-solid fa-keyboard"></i>
+                        </div>
+                        <span class="text-xs text-center leading-tight">
+                            <span class="block font-bold text-sm">No Delivery</span>
+                            <span class="text-[10px] text-gray-500 font-normal">Digitar Código</span>
+                        </span>
+                    </button>
+                </div>
 
                 <button id="redeem-btn" class="hidden w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-lg py-4 px-6 rounded-2xl shadow-lg shadow-green-500/30 animate-pulse-glow hover:scale-[1.02] transition-transform flex items-center justify-center gap-2">
                     <i class="fa-solid fa-gift"></i>
                     Usar Prêmio
                 </button>
                 
-                <div class="flex gap-2">
-                    <button id="recover-points-btn" class="flex-1 bg-white/10 backdrop-blur text-white text-xs font-medium py-3 rounded-xl hover:bg-white/20 transition">
-                        Recuperar Pontos
+                <div class="flex gap-2 justify-center">
+                    <button id="recover-points-btn" class="text-white/60 text-[10px] hover:text-white transition py-2">
+                        Perdi meu celular / Recuperar pontos
                     </button>
                 </div>
             </div>
 
-            <!-- CASHIER VIEW (Hidden by default) -->
-            <div id="cashier-view" class="hidden w-full flex-col items-center">
+            <!-- CASHIER VIEW (Modified to include Code Generator) -->
+            <div id="cashier-view" class="hidden w-full flex-col items-center gap-4 pb-10">
+                <!-- Scanner Section -->
                 <div class="glass-panel w-full rounded-3xl p-6 text-center">
                     <div class="mb-4 inline-block p-3 bg-brand-main/10 rounded-full text-brand-main">
                         <i class="fa-solid fa-cash-register text-2xl"></i>
@@ -313,11 +325,27 @@
                             <div class="scan-line"></div>
                         </div>
                     </div>
-
                     <p id="scan-feedback" class="h-12 flex items-center justify-center text-sm font-bold transition-all mb-4"></p>
-
                     <button id="start-scan-btn" class="w-full bg-brand-main text-white font-bold py-3 rounded-xl hover:bg-brand-dark transition shadow-lg">
                         <i class="fa-solid fa-camera mr-2"></i> Iniciar Scanner
+                    </button>
+                </div>
+
+                <!-- Delivery Code Generator Section -->
+                <div class="glass-panel w-full rounded-3xl p-6 text-center">
+                    <div class="mb-2 inline-block p-2 bg-brand-accent/10 rounded-full text-brand-accent">
+                        <i class="fa-solid fa-motorcycle text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800">Pontos para Delivery</h3>
+                    <p class="text-xs text-gray-500 mb-4">Gere um código único para enviar ao cliente</p>
+                    
+                    <div id="generated-code-display" class="hidden mb-4 p-4 bg-gray-100 rounded-xl border-2 border-dashed border-gray-300">
+                        <span class="block text-[10px] text-gray-400 uppercase tracking-widest">Código Gerado</span>
+                        <span id="cashier-code-text" class="text-2xl font-mono font-bold text-brand-dark tracking-widest select-all">---</span>
+                    </div>
+
+                    <button onclick="generateDeliveryCode()" class="w-full bg-brand-accent text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition shadow-lg">
+                        <i class="fa-solid fa-plus mr-2"></i> Gerar Código
                     </button>
                 </div>
             </div>
@@ -338,14 +366,13 @@
     </div>
 
 
-    <!-- === MODALS (Unified Design) === -->
+    <!-- === MODALS === -->
 
     <!-- 1. Product Options Modal -->
     <div id="options-modal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none">
         <div class="absolute inset-0 dark-glass opacity-0 transition-opacity duration-300 pointer-events-auto" onclick="closeOptionsModal()" id="options-bg"></div>
         <div class="bg-white w-full max-w-md rounded-t-[32px] sm:rounded-[32px] p-0 relative z-10 shadow-2xl transform translate-y-full transition-transform duration-300 flex flex-col max-h-[90vh] pointer-events-auto" id="options-content">
             
-            <!-- Header Image -->
             <div class="h-40 w-full relative shrink-0">
                 <img id="modal-img" src="" class="w-full h-full object-cover rounded-t-[32px]">
                 <button onclick="closeOptionsModal()" class="absolute top-4 right-4 w-8 h-8 bg-black/30 backdrop-blur text-white rounded-full flex items-center justify-center">
@@ -354,17 +381,13 @@
                 <div class="absolute bottom-0 left-0 w-full h-20 bg-gradient-to-t from-white to-transparent"></div>
             </div>
 
-            <!-- Body (Scrollable) -->
             <div class="px-6 pb-4 overflow-y-auto flex-1">
                 <h3 id="modal-title" class="text-2xl font-bold text-brand-dark mb-1 leading-tight"></h3>
                 <p id="modal-desc" class="text-sm text-gray-500 mb-6 leading-relaxed"></p>
                 
-                <div id="modal-options-container" class="space-y-6">
-                    <!-- Options injected JS -->
-                </div>
+                <div id="modal-options-container" class="space-y-6"></div>
             </div>
 
-            <!-- Footer (Fixed) -->
             <div class="p-6 border-t border-gray-100 bg-white rounded-b-[32px]">
                 <div class="flex items-center justify-between gap-4 mb-4">
                     <div class="flex items-center bg-gray-100 rounded-full p-1">
@@ -397,10 +420,8 @@
             </div>
 
             <div class="flex-1 overflow-y-auto p-4 space-y-4" id="cart-body">
-                <!-- Cart Items -->
                 <div id="cart-items-list" class="space-y-3"></div>
                 
-                <!-- Checkout Form -->
                 <div id="checkout-form" class="bg-white p-5 rounded-2xl shadow-sm space-y-4 hidden">
                     <h4 class="font-bold text-gray-800 text-sm border-b pb-2 mb-2">Detalhes do Pedido</h4>
                     
@@ -418,10 +439,8 @@
                         </div>
                     </div>
 
-                    <!-- Common Fields -->
                     <input type="text" id="cust-name" placeholder="Seu Nome" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-brand-main">
 
-                    <!-- Delivery Only Fields -->
                     <div id="delivery-address-group" class="space-y-3">
                         <div class="flex gap-2">
                             <input type="text" id="cust-cep" placeholder="CEP" class="w-1/3 bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm" onkeyup="checkCep(this.value)">
@@ -430,7 +449,6 @@
                         <input type="text" id="cust-number" placeholder="Número / Comp." class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm">
                     </div>
 
-                    <!-- Observation Field (Common) -->
                     <textarea id="cust-obs" placeholder="Observação (Ex: Sem cebola, campainha não funciona...)" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm h-20 resize-none focus:outline-none focus:border-brand-main"></textarea>
 
                     <div>
@@ -443,7 +461,6 @@
                         </select>
                     </div>
 
-                    <!-- Change Field (Cash Only) -->
                     <div id="change-group" class="hidden animate-slide-up">
                         <label class="text-xs font-bold text-gray-500">Troco para quanto?</label>
                         <input type="tel" id="cust-change" placeholder="Ex: 50,00" class="w-full mt-1 bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-brand-dark font-bold placeholder-gray-400 focus:outline-none focus:border-brand-accent">
@@ -492,7 +509,7 @@
         <div class="absolute inset-0 dark-glass" onclick="document.getElementById('qrcode-modal').classList.add('hidden')"></div>
         <div class="bg-white rounded-[32px] p-8 w-full max-w-sm relative z-10 shadow-2xl animate-stamp flex flex-col items-center">
             <h3 class="text-xl font-bold text-gray-800 mb-2">Seu Código</h3>
-            <p class="text-gray-500 text-sm mb-6 text-center">Mostre para o atendente ao fechar a conta no estabelecimento</p>
+            <p class="text-gray-500 text-sm mb-6 text-center">Mostre para o atendente</p>
             <div class="p-4 bg-white border-2 border-dashed border-gray-200 rounded-2xl mb-6 shadow-sm">
                 <canvas id="qrcode-canvas" class="block w-full rounded-lg"></canvas>
             </div>
@@ -500,7 +517,27 @@
         </div>
     </div>
 
-    <!-- 5. Recover Modal -->
+    <!-- NEW: 5. Code Input Modal (For Delivery Points) -->
+    <div id="code-input-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 dark-glass" onclick="document.getElementById('code-input-modal').classList.add('hidden')"></div>
+        <div class="bg-white rounded-[32px] p-8 w-full max-w-sm relative z-10 shadow-2xl animate-stamp">
+            <h3 class="text-xl font-bold text-gray-800 mb-2 text-center">Pontuar em Casa</h3>
+            <p class="text-gray-500 text-sm mb-6 text-center">Digite o código que veio no seu pedido</p>
+            
+            <input id="delivery-code-input" type="text" placeholder="Ex: A4F-9K2" class="w-full p-4 bg-gray-50 border-2 border-gray-200 rounded-xl text-center font-mono text-xl tracking-widest uppercase mb-4 focus:border-brand-main focus:outline-none">
+            
+            <p id="code-feedback" class="text-center text-sm font-bold mb-4 hidden"></p>
+
+            <div class="flex flex-col gap-3">
+                <button onclick="claimDeliveryCode()" class="w-full bg-brand-accent text-white font-bold py-3 rounded-xl shadow-lg hover:bg-orange-600 transition">
+                    Validar Código
+                </button>
+                <button onclick="document.getElementById('code-input-modal').classList.add('hidden')" class="w-full text-gray-500 font-bold py-2">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. Recover Modal -->
     <div id="recover-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 dark-glass"></div>
         <div class="bg-white rounded-[32px] p-8 w-full max-w-sm relative z-10 shadow-2xl">
@@ -515,17 +552,57 @@
         </div>
     </div>
 
-    <!-- 6. Redeem Confirmation Modal -->
+    <!-- 7. Redeem Confirmation Modal (Updated for Delivery/Local) -->
     <div id="redeem-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 dark-glass"></div>
         <div class="bg-white rounded-[32px] p-6 w-full max-w-sm relative z-10 shadow-2xl animate-stamp text-center">
-            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600 text-3xl"><i class="fa-solid fa-gift"></i></div>
-            <h3 class="text-xl font-bold text-gray-800 mb-2">Usar Recompensa?</h3>
-            <p class="text-gray-500 text-sm mb-6">Ao confirmar, seus pontos serão zerados e o desconto aplicado.</p>
-            <div class="flex flex-col gap-3">
-                <button id="confirm-redeem-btn" class="w-full bg-brand-main text-white font-bold py-3 rounded-xl shadow-lg">Sim, Resgatar!</button>
-                <button onclick="document.getElementById('redeem-modal').classList.add('hidden')" class="w-full bg-gray-100 text-gray-600 font-bold py-3 rounded-xl">Cancelar</button>
+            
+            <!-- Step 1: Selection -->
+            <div id="redeem-step-1">
+                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600 text-3xl"><i class="fa-solid fa-gift"></i></div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Onde vai usar?</h3>
+                <p class="text-gray-500 text-sm mb-6">Escolha como quer resgatar seu prêmio.</p>
+                
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <button onclick="selectRedeemType('store')" class="border border-gray-200 rounded-xl p-4 hover:bg-gray-50 active:border-brand-main active:bg-brand-main/5 transition">
+                        <i class="fa-solid fa-store text-2xl text-gray-400 mb-2"></i>
+                        <div class="text-xs font-bold text-gray-700">No Balcão</div>
+                    </button>
+                    <button onclick="selectRedeemType('delivery')" class="border border-gray-200 rounded-xl p-4 hover:bg-gray-50 active:border-brand-main active:bg-brand-main/5 transition">
+                        <i class="fa-solid fa-motorcycle text-2xl text-gray-400 mb-2"></i>
+                        <div class="text-xs font-bold text-gray-700">No Delivery</div>
+                    </button>
+                </div>
+                
+                <button onclick="document.getElementById('redeem-modal').classList.add('hidden')" class="text-gray-400 text-sm">Cancelar</button>
             </div>
+
+            <!-- Step 2: Confirmation Store -->
+            <div id="redeem-step-store" class="hidden">
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Confirmar Resgate</h3>
+                <p class="text-gray-500 text-sm mb-6">O atendente irá zerar seus pontos.</p>
+                <div class="flex flex-col gap-3">
+                    <button id="confirm-redeem-btn" class="w-full bg-brand-main text-white font-bold py-3 rounded-xl shadow-lg">Confirmar</button>
+                    <button onclick="resetRedeemModal()" class="w-full bg-gray-100 text-gray-600 font-bold py-3 rounded-xl">Voltar</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Confirmation Delivery (Voucher) -->
+            <div id="redeem-step-delivery" class="hidden">
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Voucher Gerado!</h3>
+                <p class="text-gray-500 text-sm mb-4">Copie e envie no WhatsApp junto com seu pedido.</p>
+                
+                <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 relative group cursor-pointer" onclick="copyVoucher()">
+                    <div class="text-[10px] text-green-600 font-bold uppercase tracking-widest mb-1">Seu Código</div>
+                    <div id="voucher-display" class="text-2xl font-mono font-bold text-green-700"></div>
+                    <div class="absolute right-3 top-1/2 -translate-y-1/2 text-green-400"><i class="fa-regular fa-copy"></i></div>
+                </div>
+
+                <div class="flex flex-col gap-3">
+                    <button onclick="finalizeDeliveryRedeem()" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl shadow-lg">Entendi, copiado!</button>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -534,7 +611,7 @@
         // Import Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, increment, collection, addDoc, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- DATA & CONFIG ---
         const STORES = [
@@ -771,7 +848,6 @@
         function calculateModalPrice() {
             let total = currentOptionsProduct.price;
             
-            // If base price is 0 (like fries), try to find selected radio
             const radios = document.querySelectorAll('#modal-options-container input[type="radio"]:checked');
             if (currentOptionsProduct.price === 0 && radios.length > 0) {
                 total = parseFloat(radios[0].value);
@@ -787,7 +863,6 @@
         }
 
         window.addToCart = () => {
-            // Validate Required
             if (currentOptionsProduct.price === 0) {
                 const radios = document.querySelectorAll('#modal-options-container input[type="radio"]:checked');
                 if (radios.length === 0) {
@@ -796,13 +871,11 @@
                 }
             }
 
-            // Gather Options
             const selectedOpts = [];
             const inputs = document.querySelectorAll('#modal-options-container input:checked');
             let unitPrice = currentOptionsProduct.price;
             
             if (unitPrice === 0 && inputs.length > 0) {
-                 // First radio usually sets base price if product price is 0
                  const firstRadio = Array.from(inputs).find(i => i.type === 'radio');
                  if(firstRadio) unitPrice = parseFloat(firstRadio.value);
             }
@@ -1000,7 +1073,7 @@
             window.open(`https://wa.me/${STORES[0].whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
         };
 
-        // --- LOYALTY LOGIC (PORTED FROM FIDCAARD) ---
+        // --- LOYALTY LOGIC ---
         const TOTAL_POINTS = 5;
         const PRIZE_DESC = "50% OFF NO PRATO";
 
@@ -1010,7 +1083,6 @@
         const pointsGridEl = document.getElementById('points-grid');
         const statusTextContainer = document.getElementById('status-text-container');
         const prizeContainer = document.getElementById('prize-container');
-        const generateQrcodeBtn = document.getElementById('generate-qrcode-btn');
         const redeemBtn = document.getElementById('redeem-btn');
         const viewPrizeBtn = document.getElementById('view-prize-btn');
         
@@ -1038,12 +1110,10 @@
             }
 
             if (points >= TOTAL_POINTS) {
-                generateQrcodeBtn.classList.add('hidden');
                 redeemBtn.classList.remove('hidden');
                 prizeContainer.classList.remove('hidden');
                 viewPrizeBtn.classList.add('hidden');
             } else {
-                generateQrcodeBtn.classList.remove('hidden');
                 redeemBtn.classList.add('hidden');
                 prizeContainer.classList.add('hidden');
                 viewPrizeBtn.classList.remove('hidden');
@@ -1051,7 +1121,6 @@
 
             // Backup Code
             if (currentUserId) {
-                // Simple hash for display
                 let hash = 0;
                 for (let i = 0; i < currentUserId.length; i++) hash = ((hash << 5) - hash) + currentUserId.charCodeAt(i);
                 const code = Math.abs(hash).toString().padStart(6, '0').slice(-6);
@@ -1078,18 +1147,117 @@
             });
         };
 
-        // Auth & Init
+        // --- NEW: DELIVERY CODE LOGIC ---
+
+        // 1. Cashier generates a code
+        window.generateDeliveryCode = async () => {
+            const code = Math.random().toString(36).substring(2, 8).toUpperCase(); // Random 6 char
+            const display = document.getElementById('generated-code-display');
+            const text = document.getElementById('cashier-code-text');
+
+            // Save to Firestore so validation works
+            await addDoc(collection(db, "active_codes"), {
+                code: code,
+                active: true,
+                createdAt: new Date()
+            });
+
+            text.textContent = code;
+            display.classList.remove('hidden');
+        };
+
+        // 2. Client claims a code
+        window.claimDeliveryCode = async () => {
+            const input = document.getElementById('delivery-code-input');
+            const feedback = document.getElementById('code-feedback');
+            const code = input.value.trim().toUpperCase();
+
+            if (code.length < 3) return;
+
+            feedback.classList.remove('hidden');
+            feedback.textContent = "Verificando...";
+            feedback.className = "text-center text-sm font-bold mb-4 text-gray-500 animate-pulse";
+
+            // Query Firestore
+            const q = query(collection(db, "active_codes"), where("code", "==", code), where("active", "==", true));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                // Valid!
+                const docRef = querySnapshot.docs[0].ref;
+                
+                // 1. Delete or deactivate code
+                await deleteDoc(docRef);
+
+                // 2. Add point
+                const cardRef = doc(db, "loyalty_cards", currentUserId);
+                await updateDoc(cardRef, { points: increment(1) });
+
+                // Success Feedback
+                feedback.className = "text-center text-sm font-bold mb-4 text-green-600";
+                feedback.innerHTML = "<i class='fa-solid fa-check'></i> Código Válido! Ponto adicionado.";
+                
+                setTimeout(() => {
+                    document.getElementById('code-input-modal').classList.add('hidden');
+                    input.value = "";
+                    feedback.classList.add('hidden');
+                }, 1500);
+
+            } else {
+                // Invalid
+                feedback.className = "text-center text-sm font-bold mb-4 text-red-500";
+                feedback.textContent = "Código inválido ou expirado.";
+            }
+        };
+
+        // 3. Remote Redemption Logic
+        window.selectRedeemType = (type) => {
+            document.getElementById('redeem-step-1').classList.add('hidden');
+            if (type === 'store') {
+                document.getElementById('redeem-step-store').classList.remove('hidden');
+            } else {
+                // Generate Voucher for Delivery
+                const voucherCode = "#" + Math.random().toString(36).substring(2, 7).toUpperCase() + "-PR";
+                document.getElementById('voucher-display').textContent = voucherCode;
+                document.getElementById('redeem-step-delivery').classList.remove('hidden');
+            }
+        };
+
+        window.resetRedeemModal = () => {
+            document.getElementById('redeem-step-store').classList.add('hidden');
+            document.getElementById('redeem-step-delivery').classList.add('hidden');
+            document.getElementById('redeem-step-1').classList.remove('hidden');
+        };
+
+        window.copyVoucher = () => {
+            const txt = document.getElementById('voucher-display').textContent;
+            navigator.clipboard.writeText(txt).then(() => {
+                alert("Código copiado! Cole no WhatsApp do restaurante.");
+            });
+        };
+
+        window.finalizeDeliveryRedeem = async () => {
+            // Deduct points
+            if (!currentUserId) return;
+            const cardRef = doc(db, "loyalty_cards", currentUserId);
+            
+            // In real app, we would save this voucher to DB to validade later
+            await setDoc(cardRef, { points: 0, userId: currentUserId, lastRedemptionAt: new Date().toISOString() });
+            
+            document.getElementById('redeem-modal').classList.add('hidden');
+            resetRedeemModal();
+        };
+
+        // --- AUTH & INIT ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUserId = user.uid;
                 document.querySelectorAll('.prize-display-text').forEach(el => el.textContent = PRIZE_DESC);
 
-                // Check for Cashier Mode URL
                 const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams.get('view') === 'cashier') {
-                    // Force Loyalty Tab and Cashier View
                     switchTab('loyalty');
-                    document.getElementById('main-header').classList.add('hidden'); // Hide header for cashier
+                    document.getElementById('main-header').classList.add('hidden');
                     document.getElementById('client-view').classList.add('hidden');
                     loadingState.classList.add('hidden');
                     document.getElementById('cashier-view').classList.remove('hidden');
@@ -1104,7 +1272,7 @@
         });
 
         // Event Listeners for Loyalty
-        generateQrcodeBtn.addEventListener('click', () => {
+        document.getElementById('generate-qrcode-btn').addEventListener('click', () => {
             new QRious({
                 element: document.getElementById('qrcode-canvas'),
                 value: currentUserId,
@@ -1115,9 +1283,17 @@
 
         viewPrizeBtn.addEventListener('click', () => document.getElementById('prize-modal').classList.remove('hidden'));
         
-        redeemBtn.addEventListener('click', () => document.getElementById('redeem-modal').classList.remove('hidden'));
-        prizeContainer.addEventListener('click', () => document.getElementById('redeem-modal').classList.remove('hidden'));
+        redeemBtn.addEventListener('click', () => {
+            resetRedeemModal();
+            document.getElementById('redeem-modal').classList.remove('hidden');
+        });
+        
+        prizeContainer.addEventListener('click', () => {
+            resetRedeemModal();
+            document.getElementById('redeem-modal').classList.remove('hidden');
+        });
 
+        // Store Redeem Confirmation
         document.getElementById('confirm-redeem-btn').addEventListener('click', async () => {
             if (!currentUserId) return;
             document.getElementById('redeem-modal').classList.add('hidden');
@@ -1130,8 +1306,6 @@
         });
 
         document.getElementById('confirm-recover-btn').addEventListener('click', () => {
-            // In a real app, this would verify the code against Firestore
-            // Here we just simulate logic or rely on the user ID persistence
             const code = document.getElementById('recover-code-input').value;
             if(code.length === 6) {
                 alert('Funcionalidade simulada: Em produção, isso buscaria o ID correspondente ao hash.');
@@ -1193,7 +1367,6 @@
 
                     if (code) {
                         handleScan(code.data);
-                        // Brief pause to prevent double scan
                         scanning = false;
                         setTimeout(() => { scanning = true; requestAnimationFrame(tick); }, 2000);
                         return;
@@ -1213,7 +1386,6 @@
                     } else {
                         await updateDoc(cardRef, { points: increment(1) });
                         feedback.innerHTML = '<span class="text-green-600">✅ Ponto Adicionado!</span>';
-                        // Vibrate if mobile
                         if(navigator.vibrate) navigator.vibrate(200);
                     }
                 } catch (e) {
@@ -1229,6 +1401,4 @@
     </script>
 </body>
 </html>
-
-
 
