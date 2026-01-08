@@ -15,11 +15,19 @@
 <!-- QR Code Libs (Fidelidade) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-<!-- React & ReactDOM -->
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<!-- Babel para transpilar JSX no navegador -->
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+// Expose to global scope for compatibility
+window.firebase = {
+  app: { initializeApp },
+  auth: { getAuth, signInAnonymously, onAuthStateChanged },
+  firestore: { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, increment }
+};
+</script>
 <script>
 tailwind.config = {
 theme: {
@@ -168,7 +176,7 @@ background: #f97316;
 <div class="bg-loyalty"></div>
 
 <!-- Main App Container -->
-<div id="root"></div>
+<div id="root" class="h-screen w-full"></div>
 
 <!-- MODALS (Unified Design) -->
 <!-- 1. Product Options Modal -->
@@ -340,95 +348,297 @@ Legal, quero ganhar!
 </div>
 </div>
 
-<script type="text/babel">
-// --- PREPARAÇÃO DO AMBIENTE ---
-const { useState, useEffect, useRef } = React;
+<!-- Restaurant Chat HTML Structure -->
+<div id="restaurant-chat" class="h-screen bg-orange-50 flex justify-center items-start font-sans overflow-hidden hidden">
+<div class="w-full max-w-md bg-white h-full shadow-2xl relative flex flex-col">
+<!-- Cabeçalho Restaurante -->
+<header class="bg-white pt-8 pb-4 px-6 flex flex-col items-center shrink-0 border-b border-orange-100 shadow-sm z-10">
+<div class="relative mb-3">
+<div class="w-24 h-24 rounded-full bg-brand-main flex items-center justify-center text-white text-3xl font-bold shadow-lg ring-4 ring-orange-100">
+<i class="fas fa-hat-chef"></i>
+</div>
+<div class="absolute bottom-1 right-1 bg-green-500 w-5 h-5 rounded-full border-2 border-white shadow-sm animate-pulse"></div>
+</div>
+<h1 class="text-xl font-bold text-gray-800 tracking-tight">Chalé Guadalupe</h1>
+<div class="flex gap-2 mt-3 mb-4">
+<button
+onclick="handleOptionClick('Quero pedir', 'SHOW_MENU')"
+class="bg-brand-main hover:bg-brand-dark text-white px-6 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm flex items-center gap-2">
+<i class="fas fa-utensils"></i> Pedir
+</button>
+<button
+onclick="handleOptionClick('Reservar', 'RESERVATION_START')"
+class="bg-white border border-orange-200 text-brand-main hover:bg-orange-50 px-6 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm flex items-center gap-2">
+<i class="fas fa-clock"></i> Reservar
+</button>
+</div>
+<div class="text-center text-xs text-gray-500 space-y-1 max-w-[280px]">
+<p>Sabores do México</p>
+<p class="flex items-center justify-center gap-1"><i class="fas fa-map-pin"></i> Reservas & Delivery</p>
+<p class="font-semibold text-brand-main">Aberto hoje até as 23h</p>
+</div>
+<div class="w-full flex items-center gap-4 mt-6">
+<div class="h-[1px] bg-orange-100 flex-1"></div>
+<span class="text-xs text-orange-300 font-medium uppercase tracking-wider">Atendimento Online</span>
+<div class="h-[1px] bg-orange-100 flex-1"></div>
+</div>
+</header>
+<!-- Área do Chat -->
+<main class="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth bg-orange-50/50" id="chat-messages">
+<!-- Messages will be inserted here -->
+</main>
+<!-- Rodapé de Opções -->
+<footer class="p-4 bg-white shrink-0 border-t border-gray-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]" id="chat-footer">
+<div class="flex flex-col gap-2">
+<div class="text-center text-xs text-gray-400 mb-1 font-medium uppercase tracking-wide">Como posso ajudar?</div>
+<button
+onclick="handleOptionClick('Ver Cardápio / Destaques', 'SHOW_MENU')"
+class="w-full py-3.5 px-6 rounded-xl font-bold text-sm transition-all duration-200 shadow-sm transform active:scale-95 bg-brand-main text-white hover:bg-brand-dark shadow-orange-200"
+>
+Ver Cardápio / Destaques
+</button>
+<button
+onclick="handleOptionClick('Fazer uma Reserva', 'RESERVATION_START')"
+class="w-full py-3.5 px-6 rounded-xl font-bold text-sm transition-all duration-200 shadow-sm transform active:scale-95 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+>
+Fazer uma Reserva
+</button>
+<button
+onclick="handleOptionClick('Horários e Local', 'INFO_LOCATION')"
+class="w-full py-3.5 px-6 rounded-xl font-bold text-sm transition-all duration-200 shadow-sm transform active:scale-95 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+>
+Horários e Local
+</button>
+<button
+onclick="handleOptionClick('Ver meus Pontos', 'CONTACT_HUMAN')"
+class="w-full py-3.5 px-6 rounded-xl font-bold text-sm transition-all duration-200 shadow-sm transform active:scale-95 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+>
+Ver meus Pontos
+</button>
+</div>
+</footer>
+</div>
+</div>
 
-// Componentes de ícone (Recriados para tema de Restaurante)
-const IconBase = ({ size = 24, className = "", children }) => (
-<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-{children}
-</svg>
-);
+<!-- Menu View -->
+<div id="menu-view" class="h-screen bg-gray-50 flex flex-col hidden">
+<!-- Header -->
+<div class="bg-white p-4 shadow-sm z-10 sticky top-0">
+<div class="max-w-md mx-auto flex items-center justify-between">
+<button onclick="switchTab('home')" class="text-brand-main">
+<i class="fas fa-arrow-left"></i>
+</button>
+<h2 class="text-lg font-bold text-gray-800">Cardápio</h2>
+<button onclick="openCartModal()" class="relative">
+<i class="fas fa-shopping-basket text-brand-main"></i>
+<span id="cart-count-display" class="absolute -top-2 -right-2 bg-brand-main text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+</button>
+</div>
+<!-- Categories -->
+<div id="categories-bar" class="flex overflow-x-auto category-scroll gap-2 mt-4 pb-2"></div>
+</div>
+<!-- Products Grid -->
+<div id="products-grid" class="flex-1 p-4 space-y-4 overflow-y-auto"></div>
+<!-- Floating Cart Button -->
+<div id="floating-cart" class="fixed bottom-6 right-6 bg-brand-main text-white p-4 rounded-full shadow-lg opacity-0 translate-y-20 pointer-events-none transition-all duration-300">
+<i class="fas fa-shopping-basket"></i>
+<span id="cart-total-display" class="ml-2">R$ 0,00</span>
+</div>
+</div>
 
-// Ícones específicos para Restaurante
-const Utensils = (props) => <IconBase {...props}><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></IconBase>;
-const Coffee = (props) => <IconBase {...props}><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></IconBase>;
-const Pizza = (props) => <IconBase {...props}><path d="M15 11h.01"/><path d="M11 15h.01"/><path d="M16 16h.01"/><path d="M2 21h20"/><path d="M20.2 20.2 3.8 3.8"/><path d="M15.2 2.9a10 10 0 0 1 5.9 11.4"/></IconBase>;
-const Clock = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></IconBase>;
-const MapPin = (props) => <IconBase {...props}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></IconBase>;
-const Phone = (props) => <IconBase {...props}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></IconBase>;
-const CheckCircle = (props) => <IconBase {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></IconBase>;
-const ChefHat = (props) => <IconBase {...props}><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></IconBase>;
-const Copy = (props) => <IconBase {...props}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></IconBase>;
+<!-- Loyalty View -->
+<div id="loyalty-view" class="h-screen flex flex-col hidden">
+<div class="p-6 flex-1 flex flex-col items-center justify-center">
+<div id="loading-state" class="text-center">
+<div class="w-12 h-12 border-4 border-brand-main border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+<p class="text-white">Carregando seu cartão...</p>
+</div>
+<div id="card-content" class="hidden w-full max-w-sm">
+<div class="bg-white rounded-3xl p-8 shadow-2xl text-center relative overflow-hidden">
+<div class="absolute -top-20 -right-20 w-40 h-40 bg-brand-main/10 rounded-full"></div>
+<div class="absolute -bottom-20 -left-20 w-40 h-40 bg-brand-accent/10 rounded-full"></div>
+<div class="relative z-10">
+<div class="mb-6">
+<h2 class="text-2xl font-bold text-gray-800 mb-2">Cartão Fidelidade</h2>
+<p class="text-gray-500 text-sm">Complete os selos e ganhe recompensas!</p>
+</div>
+<div id="points-grid" class="grid grid-cols-5 gap-3 mb-8"></div>
+<div id="status-text-container" class="mb-6 min-h-8"></div>
+<div id="prize-container" class="hidden mb-6 p-4 bg-gradient-to-r from-brand-main/10 to-brand-accent/10 rounded-2xl border border-brand-main/20">
+<div class="flex items-center justify-center gap-2">
+<i class="fas fa-gift text-brand-accent text-xl"></i>
+<span class="text-brand-main font-bold">RECOMPENSA DISPONÍVEL!</span>
+</div>
+</div>
+<div class="space-y-3">
+<button id="view-prize-btn" class="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-200 transition">
+Ver Prêmio
+</button>
+<button id="generate-qrcode-btn" class="w-full bg-brand-main text-white py-3 rounded-xl font-bold hover:bg-brand-dark transition shadow-lg">
+Gerar Código
+</button>
+<button id="redeem-btn" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition shadow-lg hidden">
+Resgatar Recompensa
+</button>
+<div class="pt-4 border-t border-gray-200">
+<p class="text-xs text-gray-500 mb-2">Código de Backup:</p>
+<p id="backup-code" class="font-mono text-sm bg-gray-100 p-2 rounded-lg"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
 
-// --- LÓGICA DO RESTAURANTE ---
-const RestaurantChat = () => {
-const [messages, setMessages] = useState([]);
-const [isTyping, setIsTyping] = useState(false);
-const [showOptions, setShowOptions] = useState(false);
-const [currentOptions, setCurrentOptions] = useState([]);
-const messagesEndRef = useRef(null);
+<script>
+// --- GLOBAL VARIABLES ---
+let currentTab = 'home';
+let cart = [];
+let currentCategory = 'all';
+let currentOptionsProduct = null;
+let deliveryFee = 0;
+let deliveryType = 'delivery';
+let currentUserId = null;
+let unsubscribeCardListener = null;
 
-// Dados do Restaurante
-const profileData = {
-name: "Chalé Guadalupe",
-role1: "Sabores do México",
-role2: "Reservas & Delivery",
-role3: "Aberto hoje até as 23h",
-avatarColor: "bg-brand-main",
-initials: "CG"
-};
+// --- TAB SWITCHING ---
+function switchTab(tab) {
+currentTab = tab;
+const body = document.body;
+const chatView = document.getElementById('restaurant-chat');
+const menuView = document.getElementById('menu-view');
+const loyaltyView = document.getElementById('loyalty-view');
 
-const scrollToBottom = () => {
-messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-};
+if (tab === 'home') {
+body.classList.remove('active-loyalty');
+chatView.classList.remove('hidden');
+menuView.classList.add('hidden');
+loyaltyView.classList.add('hidden');
+document.getElementById('floating-cart')?.style?.setProperty('display', 'none');
+} else if (tab === 'menu') {
+body.classList.remove('active-loyalty');
+chatView.classList.add('hidden');
+menuView.classList.remove('hidden');
+loyaltyView.classList.add('hidden');
+document.getElementById('floating-cart')?.style?.removeProperty('display');
+renderCategories();
+renderProducts();
+} else if (tab === 'loyalty') {
+body.classList.add('active-loyalty');
+chatView.classList.add('hidden');
+menuView.classList.add('hidden');
+loyaltyView.classList.remove('hidden');
+document.getElementById('floating-cart')?.style?.setProperty('display', 'none');
+// Initialize loyalty if needed
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('view') === 'cashier') {
+// Cashier view logic would go here
+} else {
+if (currentUserId) setupCardListener(currentUserId);
+}
+}
+}
 
-useEffect(() => {
-scrollToBottom();
-}, [messages, isTyping, showOptions]);
+// --- RESTAURANT CHAT LOGIC ---
+let messages = [];
+let isTyping = false;
+let showOptions = true;
 
-const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+async function wait(ms) {
+return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-// Função para adicionar mensagem do Bot
-const addBotMessage = async (content, type = 'text', payload = null) => {
-setIsTyping(true);
+async function addBotMessage(content, type = 'text', payload = null) {
+isTyping = true;
+updateChatUI();
 const typingTime = content ? Math.min(Math.max(content.length * 20, 600), 1500) : 600;
 await wait(typingTime);
-setIsTyping(false);
-setMessages(prev => [...prev, {
+isTyping = false;
+messages.push({
 id: Date.now(),
 sender: 'bot',
 text: content,
 type: type,
 payload: payload
-}]);
-};
+});
+updateChatUI();
+}
 
-// Handler de cliques
-const handleOptionClick = async (label, nextAction) => {
-setShowOptions(false);
-setMessages(prev => [...prev, { id: Date.now(), sender: 'user', text: label, type: 'text' }]);
+function updateChatUI() {
+const messagesContainer = document.getElementById('chat-messages');
+messagesContainer.innerHTML = '';
+
+messages.forEach(msg => {
+const msgDiv = document.createElement('div');
+msgDiv.className = `flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'} mb-4`;
+
+if (msg.sender === 'bot') {
+const senderSpan = document.createElement('span');
+senderSpan.className = 'text-[10px] text-gray-400 ml-2 mb-1 flex items-center gap-1';
+senderSpan.innerHTML = '<i class="fas fa-hat-chef text-xs"></i> CG';
+msgDiv.appendChild(senderSpan);
+}
+
+const msgContent = document.createElement('div');
+msgContent.className = `max-w-[85%] px-4 py-3 rounded-2xl shadow-sm text-sm leading-relaxed ${
+msg.sender === 'user' 
+? 'bg-brand-main text-white rounded-tr-none' 
+: 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
+}`;
+
+if (msg.type === 'text') {
+const p = document.createElement('p');
+p.className = 'whitespace-pre-line';
+p.textContent = msg.text;
+msgContent.appendChild(p);
+}
+
+msgDiv.appendChild(msgContent);
+messagesContainer.appendChild(msgDiv);
+});
+
+// Typing indicator
+if (isTyping) {
+const typingDiv = document.createElement('div');
+typingDiv.className = 'flex flex-col items-start mb-4';
+typingDiv.innerHTML = `
+<span class="text-[10px] text-gray-400 ml-2 mb-1">Digitando...</span>
+<div class="bg-white border border-gray-100 px-4 py-3 rounded-2xl rounded-tl-none flex gap-1.5 items-center w-fit shadow-sm">
+<div class="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
+<div class="w-1.5 h-1.5 bg-orange-500 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
+<div class="w-1.5 h-1.5 bg-orange-600 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
+</div>
+`;
+messagesContainer.appendChild(typingDiv);
+}
+
+// Scroll to bottom
+messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+async function handleOptionClick(label, nextAction) {
+// Add user message
+messages.push({
+id: Date.now(),
+sender: 'user',
+text: label,
+type: 'text'
+});
+updateChatUI();
+
 await wait(300);
 await processFlow(nextAction);
-};
+}
 
-// --- FLUXO DE CONVERSA DO RESTAURANTE ---
-const processFlow = async (actionId) => {
+async function processFlow(actionId) {
 switch (actionId) {
 case 'INIT':
 await addBotMessage("Olá! Bem-vindo ao Chalé Guadalupe. 🌮🌶️");
 await addBotMessage("Eu sou o maître virtual. Como posso servir você hoje?");
-setFooterOptions([
-{ label: "Ver Cardápio / Destaques", nextAction: 'SHOW_MENU' },
-{ label: "Fazer uma Reserva", nextAction: 'RESERVATION_START' },
-{ label: "Horários e Local", nextAction: 'INFO_LOCATION' },
-{ label: "Ver meus Pontos", nextAction: 'CONTACT_HUMAN' }
-]);
 break;
 case 'SHOW_MENU':
-// Mudar para a view do cardápio
-window.switchTab('menu');
+switchTab('menu');
 break;
 case 'RESERVATION_START':
 await addBotMessage("Ótimo! Nada melhor que garantir seu lugar.");
@@ -454,224 +664,29 @@ await wait(1500);
 await addBotMessage("Confirmado! 🎉", 'gallery', [{
 title: "Reserva #8902",
 desc: "Sua mesa está garantida. Tolerância de 15 minutos.",
-icon: <CheckCircle size={40} className="text-white" />,
+icon: "check-circle",
 color: "bg-green-600"
 }]);
 await addBotMessage("Enviamos os detalhes para seu e-mail cadastrado.");
-setFooterOptions([{ label: "Obrigado!", nextAction: 'RESET' }]);
 break;
 case 'INFO_LOCATION':
 await addBotMessage("Estamos localizados no coração da cidade.", 'text');
 await addBotMessage("📍 Rua das Oliveiras, 123 - Centro Gastronômico", 'contact_card');
-await addBotMessage("🕒 Horários:
-Ter-Dom: 18h às 23h30
-Seg: Fechado");
-setFooterOptions([
-{ label: "Abrir no Maps", nextAction: 'OPEN_MAPS' },
-{ label: "Voltar", nextAction: 'INIT' }
-]);
-break;
-case 'OPEN_MAPS':
-window.open('https://maps.google.com', '_blank');
-setFooterOptions([{ label: "Reiniciar", nextAction: 'RESET' }]);
+await addBotMessage("🕒 Horários:\nTer-Dom: 18h às 23h30\nSeg: Fechado");
 break;
 case 'CONTACT_HUMAN':
-// Mudar para a view de fidelidade
-window.switchTab('loyalty');
+switchTab('loyalty');
 break;
 case 'RESET':
-setMessages([]);
+messages = [];
 processFlow('INIT');
 break;
 default:
 break;
 }
-};
+}
 
-const setFooterOptions = (options) => {
-setCurrentOptions(options);
-setShowOptions(true);
-};
-
-useEffect(() => {
-const startChat = async () => {
-await wait(1000);
-processFlow('INIT');
-};
-startChat();
-}, []);
-
-return (
-<div className="h-screen bg-orange-50 flex justify-center items-start font-sans overflow-hidden">
-<div className="w-full max-w-md bg-white h-full shadow-2xl relative flex flex-col">
-{/* Cabeçalho Restaurante */}
-<header className="bg-white pt-8 pb-4 px-6 flex flex-col items-center shrink-0 border-b border-orange-100 shadow-sm z-10">
-<div className="relative mb-3">
-<div className={`w-24 h-24 rounded-full ${profileData.avatarColor} flex items-center justify-center text-white text-3xl font-bold shadow-lg ring-4 ring-orange-100`}>
-<ChefHat size={48} />
-</div>
-<div className="absolute bottom-1 right-1 bg-green-500 w-5 h-5 rounded-full border-2 border-white shadow-sm animate-pulse"></div>
-</div>
-<h1 className="text-xl font-bold text-gray-800 tracking-tight">{profileData.name}</h1>
-<div className="flex gap-2 mt-3 mb-4">
-<button
-onClick={() => handleOptionClick("Quero pedir", 'SHOW_MENU')}
-className="bg-brand-main hover:bg-brand-dark text-white px-6 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm flex items-center gap-2">
-<Utensils size={14}/> Pedir
-</button>
-<button
-onClick={() => handleOptionClick("Reservar", 'RESERVATION_START')}
-className="bg-white border border-orange-200 text-brand-main hover:bg-orange-50 px-6 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm flex items-center gap-2">
-<Clock size={14}/> Reservar
-</button>
-</div>
-<div className="text-center text-xs text-gray-500 space-y-1 max-w-[280px]">
-<p>{profileData.role1}</p>
-<p className="flex items-center justify-center gap-1"><MapPin size={10}/> {profileData.role2}</p>
-<p className="font-semibold text-brand-main">{profileData.role3}</p>
-</div>
-<div className="w-full flex items-center gap-4 mt-6">
-<div className="h-[1px] bg-orange-100 flex-1"></div>
-<span className="text-xs text-orange-300 font-medium uppercase tracking-wider">Atendimento Online</span>
-<div className="h-[1px] bg-orange-100 flex-1"></div>
-</div>
-</header>
-{/* Área do Chat */}
-<main className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth bg-orange-50/50">
-{messages.map((msg) => (
-<div
-key={msg.id}
-className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'} animate-fade-in-up`}
->
-{msg.sender === 'bot' && (
-<span className="text-[10px] text-gray-400 ml-2 mb-1 flex items-center gap-1">
-<ChefHat size={10}/> {profileData.initials}
-</span>
-)}
-<div
-className={`max-w-[85%] px-4 py-3 rounded-2xl shadow-sm text-sm leading-relaxed
-${msg.sender === 'user'
-? 'bg-brand-main text-white rounded-tr-none'
-: 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
-}
-${msg.type === 'inline_choices' ? '!bg-transparent !shadow-none !border-none !p-0 !max-w-full w-full' : ''}
-`}
->
-{/* Texto Simples */}
-{msg.type === 'text' && <p className="whitespace-pre-line">{msg.text}</p>}
-{/* Card de Contato/Endereço */}
-{msg.type === 'contact_card' && (
-<div className="flex items-center gap-3 bg-orange-50 p-3 rounded-lg mt-1 border border-orange-100">
-<MapPin size={18} className="text-orange-500 shrink-0"/>
-<span className="font-medium text-xs text-gray-700">{msg.text}</span>
-<button
-className="ml-auto bg-white p-1.5 rounded-md shadow-sm hover:bg-orange-100 text-orange-600"
-onClick={() => {navigator.clipboard.writeText(msg.text)}}
-title="Copiar"
->
-<Copy size={14} />
-</button>
-</div>
-)}
-{/* Galeria de Pratos */}
-{msg.type === 'gallery' && (
-<div className="space-y-3 mt-2">
-{msg.payload.map((item, idx) => (
-<div key={idx} className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm transition-transform hover:scale-[1.02] cursor-pointer group">
-<div className={`h-24 w-full ${item.color} flex items-center justify-center relative overflow-hidden`}>
-<div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors"></div>
-<div className="transform scale-125 group-hover:scale-110 transition-transform duration-500">
-{item.icon}
-</div>
-</div>
-<div className="p-3">
-<h3 className="font-bold text-gray-800 text-sm mb-1">{item.title}</h3>
-<p className="text-xs text-gray-500 leading-snug">{item.desc}</p>
-</div>
-</div>
-))}
-</div>
-)}
-{/* Opções Inline (Botões no fluxo) */}
-{msg.type === 'inline_choices' && (
-<div className="flex flex-col gap-2 mt-2 w-full">
-{msg.payload.map((choice, idx) => (
-<button
-key={idx}
-onClick={() => handleOptionClick(choice.label, choice.nextAction)}
-className="bg-white border border-orange-200 text-orange-700 hover:bg-orange-50 py-3 px-4 rounded-xl text-sm font-semibold transition-colors text-center shadow-sm flex items-center justify-center gap-2"
->
-{choice.label}
-</button>
-))}
-</div>
-)}
-</div>
-{msg.sender === 'user' && (
-<span className="text-[10px] text-gray-300 mr-1 mt-1">Enviado</span>
-)}
-</div>
-))}
-{/* Indicador de Digitação */}
-{isTyping && (
-<div className="flex flex-col items-start animate-fade-in">
-<span className="text-[10px] text-gray-400 ml-2 mb-1">Digitando...</span>
-<div className="bg-white border border-gray-100 px-4 py-3 rounded-2xl rounded-tl-none flex gap-1.5 items-center w-fit shadow-sm">
-<div className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-<div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-<div className="w-1.5 h-1.5 bg-orange-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-</div>
-</div>
-)}
-<div ref={messagesEndRef} />
-</main>
-{/* Rodapé de Opções */}
-<footer className="p-4 bg-white shrink-0 border-t border-gray-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-{showOptions && !isTyping ? (
-<div className="flex flex-col gap-2 animate-slide-up">
-<div className="text-center text-xs text-gray-400 mb-1 font-medium uppercase tracking-wide">Como posso ajudar?</div>
-{currentOptions.map((opt, idx) => (
-<button
-key={idx}
-onClick={() => handleOptionClick(opt.label, opt.nextAction)}
-className={`
-w-full py-3.5 px-6 rounded-xl font-bold text-sm transition-all duration-200 shadow-sm transform active:scale-95
-${idx === 0
-? 'bg-brand-main text-white hover:bg-brand-dark shadow-orange-200'
-: 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-}
-`}
->
-{opt.label}
-</button>
-))}
-</div>
-) : (
-<div className="h-4"></div>
-)}
-</footer>
-</div>
-<style>{`
-@keyframes fade-in-up {
-from { opacity: 0; transform: translateY(10px); }
-to { opacity: 1; transform: translateY(0); }
-}
-.animate-fade-in-up {
-animation: fade-in-up 0.4s ease-out forwards;
-}
-@keyframes slide-up {
-from { opacity: 0; transform: translateY(20px); }
-to { opacity: 1; transform: translateY(0); }
-}
-.animate-slide-up {
-animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-`}</style>
-</div>
-);
-};
-
-// --- MENU LOGIC FROM SECOND FILE ---
+// --- MENU LOGIC ---
 const STORES = [
 { id: 1, name: "La Encasa - Loja Centro", whatsapp: "5516991421704" }
 ];
@@ -717,75 +732,24 @@ options: [
 { id: 7, name: "Mini Churros", description: "Com doce de leite.", price: 12.00, image: "https://www.portonovoalimentos.com.br/medias/news/depositphotos-406675082-xl.jpg?w=600&h=auto&fit=fit&crop=center", category: "Sobremesa" }
 ];
 
-// Firebase Config
-const firebaseConfig = {
-apiKey: "AIzaSyB_l_KIgNlxrmR2gSVW81EGGTrUQS0JYFc",
-authDomain: "fidelcard-d216d.firebaseapp.com",
-projectId: "fidelcard-d216d",
-storageBucket: "fidelcard-d216d.firebasestorage.app",
-messagingSenderId: "1037656229354",
-appId: "1:1037656229354:web:d444f2bcc4ccaa0fa01e93"
-};
-
-// --- GLOBAL STATE ---
-let currentTab = 'home';
-let cart = [];
-let currentCategory = 'all';
-let currentOptionsProduct = null;
-let deliveryFee = 0;
-let deliveryType = 'delivery';
-let currentUserId = null;
-let unsubscribeCardListener = null;
-
-// --- UI UTILS ---
-window.switchTab = (tab) => {
-currentTab = tab;
-const body = document.body;
-if (tab === 'home') {
-body.classList.remove('active-loyalty');
-document.getElementById('floating-cart')?.style?.setProperty('display', 'none');
-} else if (tab === 'menu') {
-body.classList.remove('active-loyalty');
-document.getElementById('floating-cart')?.style?.removeProperty('display');
-renderCategories();
-renderProducts();
-} else if (tab === 'loyalty') {
-body.classList.add('active-loyalty');
-document.getElementById('floating-cart')?.style?.setProperty('display', 'none');
-// Trigger loyalty init if needed
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('view') === 'cashier') {
-document.getElementById('main-header')?.classList?.add('hidden');
-document.getElementById('client-view')?.classList?.add('hidden');
-loadingState.classList.add('hidden');
-document.getElementById('cashier-view')?.classList?.remove('hidden');
-document.getElementById('cashier-view')?.classList?.add('flex');
-initScannerEvents();
-} else {
-if (currentUserId) setupCardListener(currentUserId);
-}
-}
-};
-
-// --- MENU LOGIC ---
 function renderCategories() {
 const categories = ['Todos', 'Entrada', 'Principal', 'Sobremesa', 'Combo'];
 const container = document.getElementById('categories-bar');
 if (!container) return;
 container.innerHTML = categories.map(cat => {
 const isActive = (cat === 'Todos' && currentCategory === 'all') || cat === currentCategory;
-return `<button onclick="window.filterCategory('${cat}')"
+return `<button onclick="filterCategory('${cat}')"
 class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${isActive ? 'bg-brand-main text-white shadow-md' : 'bg-white text-gray-500 border border-gray-100'}">
 ${cat}
 </button>`;
 }).join('');
 }
 
-window.filterCategory = (cat) => {
+function filterCategory(cat) {
 currentCategory = cat === 'Todos' ? 'all' : cat;
 renderCategories();
 renderProducts();
-};
+}
 
 function renderProducts() {
 const grid = document.getElementById('products-grid');
@@ -803,7 +767,7 @@ return `
 </div>
 <div class="flex justify-between items-end">
 <span class="text-brand-main font-bold text-sm">${p.price === 0 ? 'A partir de ' : ''}R$ ${basePrice.toFixed(2).replace('.', ',')}</span>
-<button onclick="window.openOptions(${p.id})" class="bg-brand-main text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform">
+<button onclick="openOptions(${p.id})" class="bg-brand-main text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform">
 <i class="fa-solid fa-plus text-xs"></i>
 </button>
 </div>
@@ -813,7 +777,7 @@ return `
 }
 
 // --- OPTIONS MODAL LOGIC ---
-window.openOptions = (id) => {
+function openOptions(id) {
 const p = PRODUCTS.find(x => x.id === id);
 currentOptionsProduct = { ...p, qty: 1, selectedOptions: {} };
 // Populate Modal
@@ -834,7 +798,7 @@ ${grp.items.map((item, iIdx) => `
 <div class="flex items-center gap-3">
 <input type="${grp.type}" name="grp-${gIdx}" value="${item.price}" data-name="${item.name}"
 class="w-4 h-4 accent-brand-main"
-onchange="window.handleOptionChange(this, ${grp.max || 1}, '${grp.type}')">
+onchange="handleOptionChange(this, ${grp.max || 1}, '${grp.type}')">
 <span class="text-sm text-gray-700 font-medium">${item.name}</span>
 </div>
 <span class="text-xs font-bold text-gray-500">${item.price > 0 ? '+ R$ ' + item.price.toFixed(2).replace('.', ',') : ''}</span>
@@ -858,9 +822,9 @@ setTimeout(() => {
 bg.classList.remove('opacity-0');
 content.classList.remove('translate-y-full');
 }, 10);
-};
+}
 
-window.closeOptionsModal = () => {
+function closeOptionsModal() {
 const bg = document.getElementById('options-bg');
 const content = document.getElementById('options-content');
 bg.classList.add('opacity-0');
@@ -869,9 +833,9 @@ setTimeout(() => {
 document.getElementById('options-modal').classList.add('hidden');
 document.body.classList.remove('modal-open');
 }, 300);
-};
+}
 
-window.handleOptionChange = (input, max, type) => {
+function handleOptionChange(input, max, type) {
 if (type === 'checkbox' && max) {
 const name = input.name;
 const checked = document.querySelectorAll(`input[name="${name}"]:checked`);
@@ -882,13 +846,13 @@ return;
 }
 }
 calculateModalPrice();
-};
+}
 
-window.updateQty = (change) => {
+function updateQty(change) {
 currentOptionsProduct.qty = Math.max(1, currentOptionsProduct.qty + change);
 document.getElementById('modal-qty').textContent = currentOptionsProduct.qty;
 calculateModalPrice();
-};
+}
 
 function calculateModalPrice() {
 let total = currentOptionsProduct.price;
@@ -904,7 +868,7 @@ const final = total * currentOptionsProduct.qty;
 document.getElementById('modal-price').textContent = `R$ ${final.toFixed(2).replace('.', ',')}`;
 }
 
-window.addToCart = () => {
+function addToCart() {
 if (currentOptionsProduct.price === 0) {
 const radios = document.querySelectorAll('#modal-options-container input[type="radio"]:checked');
 if (radios.length === 0) {
@@ -933,7 +897,7 @@ cartId: Date.now()
 });
 updateCartUI();
 closeOptionsModal();
-};
+}
 
 // --- CART LOGIC ---
 function updateCartUI() {
@@ -953,7 +917,7 @@ floatCart.classList.add('opacity-0', 'translate-y-20', 'pointer-events-none');
 }
 }
 
-window.openCartModal = () => {
+function openCartModal() {
 renderCartItems();
 document.body.classList.add('modal-open');
 const modal = document.getElementById('cart-modal');
@@ -964,9 +928,9 @@ setTimeout(() => {
 bg.classList.remove('opacity-0');
 content.classList.remove('translate-y-full');
 }, 10);
-};
+}
 
-window.closeCartModal = () => {
+function closeCartModal() {
 const bg = document.getElementById('cart-bg');
 const content = document.getElementById('cart-content');
 bg.classList.add('opacity-0');
@@ -975,7 +939,7 @@ setTimeout(() => {
 document.getElementById('cart-modal').classList.add('hidden');
 document.body.classList.remove('modal-open');
 }, 300);
-};
+}
 
 function renderCartItems() {
 const container = document.getElementById('cart-items-list');
@@ -997,7 +961,7 @@ container.innerHTML = cart.map(item => `
 <div class="flex-1">
 <div class="flex justify-between items-start">
 <h4 class="font-bold text-gray-800 text-sm">${item.name}</h4>
-<button onclick="window.removeCartItem(${item.cartId})" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can text-xs"></i></button>
+<button onclick="removeCartItem(${item.cartId})" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can text-xs"></i></button>
 </div>
 <p class="text-[10px] text-gray-500 leading-tight my-1">${item.finalOptions.join(', ')}</p>
 <div class="flex justify-between items-end mt-2">
@@ -1012,14 +976,14 @@ container.innerHTML = cart.map(item => `
 updateTotals();
 }
 
-window.removeCartItem = (id) => {
+function removeCartItem(id) {
 cart = cart.filter(x => x.cartId !== id);
 renderCartItems();
 updateCartUI();
 if(cart.length === 0) closeCartModal();
-};
+}
 
-window.toggleDeliveryFields = () => {
+function toggleDeliveryFields() {
 const type = document.querySelector('input[name="deliveryType"]:checked')?.value;
 deliveryType = type;
 const addrGroup = document.getElementById('delivery-address-group');
@@ -1028,12 +992,12 @@ addrGroup?.classList?.add('hidden');
 deliveryFee = 0;
 } else {
 addrGroup?.classList?.remove('hidden');
-window.checkCep(document.getElementById('cust-cep')?.value);
+checkCep(document.getElementById('cust-cep')?.value);
 }
 updateTotals();
-};
+}
 
-window.togglePaymentFields = () => {
+function togglePaymentFields() {
 const payment = document.getElementById('cust-payment')?.value;
 const changeGroup = document.getElementById('change-group');
 if (payment === 'Dinheiro') {
@@ -1041,9 +1005,9 @@ changeGroup?.classList?.remove('hidden');
 } else {
 changeGroup?.classList?.add('hidden');
 }
-};
+}
 
-window.checkCep = (val) => {
+function checkCep(val) {
 if (!val) return;
 const prefix = val.replace(/\D/g, '').substring(0, 5);
 if (prefix.length === 5) {
@@ -1052,7 +1016,7 @@ deliveryFee = DELIVERY_ZONES[prefix] || DELIVERY_ZONES['default'];
 deliveryFee = 0;
 }
 updateTotals();
-};
+}
 
 function updateTotals() {
 const sub = cart.reduce((a, b) => a + (b.unitPrice * b.qty), 0);
@@ -1064,7 +1028,7 @@ if (delEl) delEl.textContent = `R$ ${deliveryFee.toFixed(2).replace('.', ',')}`;
 if (finEl) finEl.textContent = `R$ ${(sub + deliveryFee).toFixed(2).replace('.', ',')}`;
 }
 
-window.sendWhatsapp = () => {
+function sendWhatsapp() {
 if (cart.length === 0) return;
 const name = document.getElementById('cust-name')?.value;
 const payment = document.getElementById('cust-payment')?.value;
@@ -1107,23 +1071,24 @@ if (payment === 'Dinheiro' && change) {
 msg += ` (Troco para ${change})`;
 }
 window.open(`https://wa.me/${STORES[0].whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
-};
+}
 
 // --- LOYALTY LOGIC ---
 const TOTAL_POINTS = 5;
 const PRIZE_DESC = "50% OFF NO PRATO";
 
-const loadingState = document.getElementById('loading-state');
-const cardContent = document.getElementById('card-content');
+function renderCard(points) {
 const pointsGridEl = document.getElementById('points-grid');
 const statusTextContainer = document.getElementById('status-text-container');
 const prizeContainer = document.getElementById('prize-container');
 const generateQrcodeBtn = document.getElementById('generate-qrcode-btn');
 const redeemBtn = document.getElementById('redeem-btn');
 const viewPrizeBtn = document.getElementById('view-prize-btn');
+const cardContent = document.getElementById('card-content');
+const loadingState = document.getElementById('loading-state');
 
-const renderCard = (points) => {
 if (!pointsGridEl || !statusTextContainer || !prizeContainer || !generateQrcodeBtn || !redeemBtn || !viewPrizeBtn || !cardContent || !loadingState) return;
+
 pointsGridEl.innerHTML = '';
 for (let i = 1; i <= TOTAL_POINTS; i++) {
 const isFilled = i <= points;
@@ -1136,6 +1101,7 @@ slotDiv.innerHTML = `<span class="text-gray-300 font-bold text-lg">${i}</span>`;
 }
 pointsGridEl.appendChild(slotDiv);
 }
+
 if (points === 0) {
 statusTextContainer.innerHTML = '<span class="text-2xl font-bold text-gray-800">Vamos lá!</span>';
 } else if (points < TOTAL_POINTS) {
@@ -1143,6 +1109,7 @@ statusTextContainer.innerHTML = `<span class="text-3xl font-bold text-gray-800">
 } else {
 statusTextContainer.innerHTML = '<span class="text-2xl font-bold text-brand-accent">Completo!</span>';
 }
+
 if (points >= TOTAL_POINTS) {
 generateQrcodeBtn.classList.add('hidden');
 redeemBtn.classList.remove('hidden');
@@ -1154,37 +1121,64 @@ redeemBtn.classList.add('hidden');
 prizeContainer.classList.add('hidden');
 viewPrizeBtn.classList.remove('hidden');
 }
+
 if (currentUserId) {
 let hash = 0;
 for (let i = 0; i < currentUserId.length; i++) hash = ((hash << 5) - hash) + currentUserId.charCodeAt(i);
 const code = Math.abs(hash).toString().padStart(6, '0').slice(-6);
 document.getElementById('backup-code').textContent = code.split('').join(' ');
 }
+
 loadingState.classList.add('hidden');
 cardContent.classList.remove('hidden');
-document.getElementById('client-view')?.classList?.remove('hidden');
-document.getElementById('client-view')?.classList?.add('flex');
+}
+
+function setupCardListener(userId) {
+// This will be initialized after Firebase loads
+}
+
+// --- FIREBASE INITIALIZATION ---
+document.addEventListener('DOMContentLoaded', async () => {
+// Wait for Firebase to be available
+const checkFirebase = () => {
+return new Promise((resolve) => {
+const interval = setInterval(() => {
+if (window.firebase && window.firebase.app) {
+clearInterval(interval);
+resolve();
+}
+}, 100);
+});
 };
 
-const setupCardListener = (userId) => {
-const { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, increment } = window.firebase.firestore;
-const db = getFirestore();
-const cardRef = doc(db, "loyalty_cards", userId);
+await checkFirebase();
+
+const firebaseConfig = {
+apiKey: "AIzaSyB_l_KIgNlxrmR2gSVW81EGGTrUQS0JYFc",
+authDomain: "fidelcard-d216d.firebaseapp.com",
+projectId: "fidelcard-d216d",
+storageBucket: "fidelcard-d216d.firebasestorage.app",
+messagingSenderId: "1037656229354",
+appId: "1:1037656229354:web:d444f2bcc4ccaa0fa01e93"
+};
+
+const app = window.firebase.app.initializeApp(firebaseConfig);
+const auth = window.firebase.auth.getAuth(app);
+const db = window.firebase.firestore.getFirestore(app);
+
+// Override setupCardListener with Firebase functionality
+setupCardListener = (userId) => {
+const cardRef = window.firebase.firestore.doc(db, "loyalty_cards", userId);
 if (unsubscribeCardListener) unsubscribeCardListener();
-unsubscribeCardListener = onSnapshot(cardRef, async (docSnap) => {
+unsubscribeCardListener = window.firebase.firestore.onSnapshot(cardRef, async (docSnap) => {
 if (docSnap.exists()) {
 renderCard(docSnap.data().points);
 } else {
-await setDoc(cardRef, { points: 0, userId: userId, createdAt: new Date().toISOString() });
+await window.firebase.firestore.setDoc(cardRef, { points: 0, userId: userId, createdAt: new Date().toISOString() });
 renderCard(0);
 }
 });
 };
-
-// --- INIT FIREBASE ---
-const app = window.firebase.initializeApp(firebaseConfig);
-const auth = window.firebase.auth.getAuth(app);
-const db = window.firebase.firestore.getFirestore(app);
 
 window.firebase.auth.onAuthStateChanged(auth, (user) => {
 if (user) {
@@ -1201,9 +1195,11 @@ window.firebase.auth.signInAnonymously(auth);
 }
 });
 
+// Initialize the chat
+processFlow('INIT');
+
 // Event Listeners for Loyalty
-if (generateQrcodeBtn) {
-generateQrcodeBtn.addEventListener('click', () => {
+document.getElementById('generate-qrcode-btn')?.addEventListener('click', () => {
 new QRious({
 element: document.getElementById('qrcode-canvas'),
 value: currentUserId,
@@ -1211,26 +1207,30 @@ size: 256
 });
 document.getElementById('qrcode-modal').classList.remove('hidden');
 });
-}
-if (viewPrizeBtn) {
-viewPrizeBtn.addEventListener('click', () => document.getElementById('prize-modal').classList.remove('hidden'));
-}
-if (redeemBtn) {
-redeemBtn.addEventListener('click', () => document.getElementById('redeem-modal').classList.remove('hidden'));
-}
-if (prizeContainer) {
-prizeContainer.addEventListener('click', () => document.getElementById('redeem-modal').classList.remove('hidden'));
-}
+
+document.getElementById('view-prize-btn')?.addEventListener('click', () => {
+document.getElementById('prize-modal').classList.remove('hidden');
+});
+
+document.getElementById('redeem-btn')?.addEventListener('click', () => {
+document.getElementById('redeem-modal').classList.remove('hidden');
+});
+
+document.getElementById('prize-container')?.addEventListener('click', () => {
+document.getElementById('redeem-modal').classList.remove('hidden');
+});
+
 document.getElementById('confirm-redeem-btn')?.addEventListener('click', async () => {
 if (!currentUserId) return;
 document.getElementById('redeem-modal').classList.add('hidden');
-const { doc, setDoc } = window.firebase.firestore;
-const cardRef = doc(db, "loyalty_cards", currentUserId);
-await setDoc(cardRef, { points: 0, userId: currentUserId, lastRedemptionAt: new Date().toISOString() });
+const cardRef = window.firebase.firestore.doc(db, "loyalty_cards", currentUserId);
+await window.firebase.firestore.setDoc(cardRef, { points: 0, userId: currentUserId, lastRedemptionAt: new Date().toISOString() });
 });
+
 document.getElementById('recover-points-btn')?.addEventListener('click', () => {
 document.getElementById('recover-modal').classList.remove('hidden');
 });
+
 document.getElementById('confirm-recover-btn')?.addEventListener('click', () => {
 const code = document.getElementById('recover-code-input')?.value;
 if(code?.length === 6) {
@@ -1241,103 +1241,11 @@ alert('Código inválido');
 }
 });
 
-// --- SCANNER LOGIC (ADMIN) ---
-function initScannerEvents() {
-const video = document.getElementById('scanner-video');
-const canvas = document.getElementById('scanner-canvas');
-const placeholder = document.getElementById('scanner-placeholder');
-const overlay = document.getElementById('scan-overlay');
-const feedback = document.getElementById('scan-feedback');
-const btn = document.getElementById('start-scan-btn');
-let stream = null;
-let scanning = false;
-btn?.addEventListener('click', async () => {
-if (stream) {
-stream.getTracks().forEach(t => t.stop());
-stream = null;
-video?.classList?.add('hidden');
-placeholder?.classList?.remove('hidden');
-overlay?.classList?.add('hidden');
-btn.innerHTML = '<i class="fa-solid fa-camera mr-2"></i> Iniciar Scanner';
-scanning = false;
-} else {
-try {
-stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-video.srcObject = stream;
-video.setAttribute('playsinline', true);
-video.play();
-video?.classList?.remove('hidden');
-placeholder?.classList?.add('hidden');
-overlay?.classList?.remove('hidden');
-btn.innerHTML = '<i class="fa-solid fa-stop mr-2"></i> Parar Scanner';
-scanning = true;
-requestAnimationFrame(tick);
-} catch (e) {
-alert('Erro ao acessar câmera');
-}
-}
-});
-function tick() {
-if (!scanning) return;
-if (video?.readyState === video.HAVE_ENOUGH_DATA) {
-canvas.height = video.videoHeight;
-canvas.width = video.videoWidth;
-const ctx = canvas.getContext('2d', { willReadFrequently: true });
-ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
-if (code) {
-handleScan(code.data);
-scanning = false;
-setTimeout(() => { scanning = true; requestAnimationFrame(tick); }, 2000);
-return;
-}
-}
-requestAnimationFrame(tick);
-}
-async function handleScan(scannedId) {
-const { doc, getDoc, updateDoc, increment } = window.firebase.firestore;
-const cardRef = doc(db, "loyalty_cards", scannedId);
-try {
-const snap = await getDoc(cardRef);
-if (!snap.exists()) {
-feedback.innerHTML = '<span class="text-red-500">Cartão não encontrado</span>';
-} else if (snap.data().points >= TOTAL_POINTS) {
-feedback.innerHTML = '<span class="text-yellow-600">⚠️ Cartão Cheio! Resgate necessário.</span>';
-} else {
-await updateDoc(cardRef, { points: increment(1) });
-feedback.innerHTML = '<span class="text-green-600">✅ Ponto Adicionado!</span>';
-if(navigator.vibrate) navigator.vibrate(200);
-}
-} catch (e) {
-feedback.innerHTML = '<span class="text-red-500">Erro de conexão</span>';
-}
-}
-}
-
-// --- RENDER INITIAL VIEW ---
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<RestaurantChat />);
-
-// Initialize menu if needed
+// Initialize menu
 renderCategories();
 renderProducts();
 renderCartItems();
-
-</script>
-
-<!-- Import Firebase -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-// Expose to global scope for compatibility
-window.firebase = {
-app: { initializeApp },
-auth: { getAuth, signInAnonymously, onAuthStateChanged },
-firestore: { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, increment }
-};
+});
 </script>
 
 </body>
